@@ -199,6 +199,11 @@ public:
                                  const std::string& sceneEntity);
 
 
+  //---------------------------- Gaze component ------------------------------------------------ //
+  nlohmann::json getGazeData();
+  //---------------------------- Gaze component ------------------------------------------------ //
+
+
 private:
 
   void update(bool withBroadphase = false);

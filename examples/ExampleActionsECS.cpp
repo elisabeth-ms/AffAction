@@ -301,8 +301,12 @@ ExampleActionsECS::~ExampleActionsECS()
 
 bool ExampleActionsECS::initParameters()
 {
-  xmlFileName = "g_attentive_support.xml";
+  // xmlFileName = "g_attentive_support.xml";
+  xmlFileName = "g_example_gaze.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
+  gazeDataFileName = "gaze_test_1.csv";
+  gazeDataDirectory = "../../gazeData";
+  saveGazeData = false;
   speedUp = 3;
 
   return true;
@@ -342,6 +346,11 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-turbo", &turbo, "Compute action duration to be as fast as possible");
   parser->getArgument("-maxNumThreads", &maxNumThreads, "Max. number of threads for planning");
   parser->getArgument("-earlyExitAction", &earlyExitAction, "Early exit with action prediction's first error");
+
+  // Save gaze data
+  parser->getArgument("-gazeDataFileName", &gazeDataFileName, "Gaze data file name " "(default is %s)", gazeDataFileName.c_str());
+  parser->getArgument("-gazeDataDirectory", &gazeDataDirectory, "Gaze data directory" "(dafault is %s)", gazeDataDirectory.c_str());
+  parser->getArgument("-saveGazeData", &saveGazeData, "Enable saving of gaze data" "(default is %d)", saveGazeData);
 
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
@@ -570,6 +579,13 @@ bool ExampleActionsECS::initAlgo()
                                                     virtualCameraWidth, virtualCameraHeight);
   }
 
+  // Add the cool GazeComponent
+  gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData);
+  gazeC->addSceneToAttend(*getScene(), getGraph());
+  if(saveGazeData)
+      gazeC->openFile(gazeDataDirectory+"/"+gazeDataFileName);
+  addComponent(gazeC);
+  
   // Printing the help prompt
   RLOG_CPP(1, help());
 
@@ -1842,6 +1858,42 @@ std::string ExampleActionsECS::getComponentArguments() const
 {
   return componentArgs;
 }
+
+
+//---------------------------- Gaze component ------------------------------------------------ //
+nlohmann::json ExampleActionsECS::getGazeData() const
+{
+    nlohmann::json gazeDataJson = nlohmann::json::array();  // Create an empty JSON array
+    const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
+    // Iterate over the gazeData deque
+    for (const auto& dataPoint : *gazeData) 
+    {
+        nlohmann::json dataJson;
+        dataJson["time"] = dataPoint.time;
+        dataJson["gaze_velocity"] = dataPoint.gazeVel;
+
+        // Create a JSON array for objects and distances
+        nlohmann::json objectsJson = nlohmann::json::array();
+        uint maxSize = 2;
+        if (dataPoint.objectNames.size() < maxSize)
+            maxSize = dataPoint.objectNames.size();
+        for (size_t i = 0; i < maxSize; ++i) {
+            nlohmann::json objectJson;
+            objectJson["name"] = dataPoint.objectNames[i];
+            objectJson["angleDiff"] = dataPoint.angleDiffs[i];
+            objectJson["distance"] = dataPoint.distances[i];
+            objectsJson.push_back(objectJson);
+        }
+        dataJson["objects"] = objectsJson;
+
+        // Add the current data point to the JSON array
+        gazeDataJson.push_back(dataJson);
+    }
+
+    return gazeDataJson;  // Return the JSON array of all gaze data points
+}
+//---------------------------- Gaze component ------------------------------------------------ //
+
 
 
 /*******************************************************************************

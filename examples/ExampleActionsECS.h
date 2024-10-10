@@ -60,6 +60,10 @@
 
 #include <atomic>
 
+//---------------------------- Gaze component ------------------------------------------------ //
+#include "GazeComponent.h"
+//---------------------------- Gaze component ------------------------------------------------ //
+
 
 
 extern "C" {
@@ -135,6 +139,15 @@ public:
 
   std::unique_ptr<GraphicsWindow> viewer;
 
+
+//---------------------------- Gaze component ------------------------------------------------ //
+  std::string gazeDataFileName;
+  std::string gazeDataDirectory;
+  bool saveGazeData;
+  nlohmann::json getGazeData() const;
+//---------------------------- Gaze component ------------------------------------------------ //
+
+
 protected:
 
   EntityBase entity;
@@ -197,6 +210,13 @@ protected:
   std::vector<ComponentBase*> components;
 
   RcsGraph* graphToInitializeWith;
+  
+  //---------------------------- Gaze component ------------------------------------------------ //
+
+  GazeComponent * gazeC;
+
+  //---------------------------- Gaze component ------------------------------------------------ //
+
 };
 
 }   // namespace aff

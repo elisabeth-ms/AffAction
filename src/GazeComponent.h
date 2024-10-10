@@ -40,10 +40,24 @@
 #include <Rcs_graph.h>
 
 #include <tuple>
-
+#include <iostream>
+#include <fstream>
 
 namespace aff
 {
+
+
+struct GazeDataPoint {
+    double time;  // Time in seconds
+    std::vector<std::string> objectNames;  // Names of the objects
+    std::vector<double> angleDiffs;  // Angle differences to objects in deg
+    std::vector<double> distances;   // Distance to each object
+    double gazeVel; // Gaze velocity in deg/s
+
+    GazeDataPoint(double t, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_, const std::vector<double>& distances_, double vel)
+        : time(t), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel) {}
+};
+
 
 class GazeComponent : public ComponentBase
 {
@@ -54,23 +68,35 @@ public:
    * \param[in] parent    Entity class responsible for event subscriptions
    */
   GazeComponent(EntityBase* parent, const std::string& gazingBody,
-                int dirIdx = 1);
+                int dirIdx = 1, double maxDurationGazeData=20, bool saveData=false);
 
   /*! \brief Unsubscribes and deletes all previously allocated memory.
    *         There is no thread that needs to be stopped.
    */
-  virtual ~GazeComponent() = default;
+  virtual ~GazeComponent();
 
   void addSceneToAttend(const ActionScene& scene, const RcsGraph* graph);
+  
+  void openFile(const std::string& filename);
+  
+  // Pointer to gazeData
+  const std::deque<GazeDataPoint>* getGazeData() {
+      return &gazeData;  
+  }
 
 private:
 
   void onPostUpdateGraph(RcsGraph* desired, RcsGraph* curent);
   const RcsBody* getBody(const RcsGraph* graph, const std::string& bdyName, int& bdyId);
+  
+
 
   std::string gazingBody;
   int id_gazeBody;
   int gazeDirectionIdx;   // 0: x, 1: y, 2: z
+  bool saveData;
+  double prevHeadDirection[3];
+
 
   struct BodyIntersection
   {
@@ -84,9 +110,28 @@ private:
     std::string bdyName;
     int bdyId;
     double gazeAngle;
+    double objectPointDistance;
   };
 
   std::vector<BodyIntersection> objectsToAttend;
+  std::ofstream file;  // File stream object
+  
+  void writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel);
+
+  // void addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& distances, double gazeVel);
+
+  std::deque<GazeDataPoint> gazeData;
+  double maxDurationGazeData;
+  double totalDurationGazeData;
+
+  void addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& diffAngles, const std::vector<double>& distances, double gazeVel);
+
+  void removeOldestGazeDataPoint();
+
+  void getPointsAABBSurface(const double (&xyzMin)[3], const double (&xyzMax)[3], std::vector<std::array<double,3>>& pointsObject, const double & distance);
+
+
+  
 };
 
 }

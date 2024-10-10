@@ -503,6 +503,16 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getAgents();
   })
 
+  //---------------------------- Gaze component ---------------------------------------------//
+
+  .def("get_gaze_data", [](aff::ExampleActionsECS& ex) -> nlohmann::json
+  {
+    return ex.getQuery()->getGazeData();
+  })
+
+  //---------------------------- Gaze component ---------------------------------------------//
+
+
   //////////////////////////////////////////////////////////////////////////////
   // Returns an empty string if there are no objects held in the hand, or the
   // name of the holding hand
@@ -883,7 +893,7 @@ PYBIND11_MODULE(pyAffaction, m)
     ex.addComponent(lmc);   // Takes care of deletion
     lmc->setScenePtr(ex.getGraph(), ex.getScene());
 
-    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera");
+    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera_0");
     RCHECK(cam);
     lmc->addArucoTracker(cam->name, "aruco_base");
 
@@ -898,6 +908,8 @@ PYBIND11_MODULE(pyAffaction, m)
 
     return true;
   })
+
+
 
   //////////////////////////////////////////////////////////////////////////////
   // Adds a component to connect to the PTU action server ROS node, and to being
@@ -1007,6 +1019,8 @@ PYBIND11_MODULE(pyAffaction, m)
   .def("stop", &aff::ExampleActionsECS::stop)
   .def("isRunning", &aff::ExampleActionsECS::isRunning)
 
+
+
   //////////////////////////////////////////////////////////////////////////////
   // Scales the durations of actions (global scope)
   //////////////////////////////////////////////////////////////////////////////
@@ -1070,6 +1084,11 @@ PYBIND11_MODULE(pyAffaction, m)
   .def_readwrite("virtualCameraWindowEnabled", &aff::ExampleActionsECS::virtualCameraWindowEnabled)
   .def_readwrite("turbo", &aff::ExampleActionsECS::turbo)
   .def_readwrite("maxNumThreads", &aff::ExampleActionsECS::maxNumThreads)
+  
+  // ----------------- Gaze component ---------------------------------------------- //
+  .def_readwrite("saveGazeData", &aff::ExampleActionsECS::saveGazeData)
+  .def_readwrite("gazeDataFileName", &aff::ExampleActionsECS::gazeDataFileName)
+  .def_readwrite("gazeDataDirectory", &aff::ExampleActionsECS::gazeDataDirectory)
   ;
 
 
@@ -1187,11 +1206,7 @@ PYBIND11_MODULE(pyAffaction, m)
     }
 
     return data;
-  })
-  ;
-
-
-
+  });
 
 
 
