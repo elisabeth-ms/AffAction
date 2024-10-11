@@ -98,9 +98,9 @@
     <xi:include href="../scene/g_glass_quadratic_29.xml"/>
   </Group>
     
-  <!--Group prev="table_grid_2_3" name="bowl" color="YELLOW" rigid_body_joints="true" >
+  <Group prev="table_grid_2_3" name="bowl" color="YELLOW" rigid_body_joints="true" >
     <xi:include href="../scene/g_bowl_33.xml"/>
-  </Group-->
+  </Group>
 
 
 
