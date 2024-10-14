@@ -14,6 +14,7 @@ import getch
 import matplotlib.pyplot as plt
 import random
 
+
 if platform.system() == "Linux":
     sys.path.append("lib")
 elif platform.system() == "Windows":
@@ -21,11 +22,9 @@ elif platform.system() == "Windows":
 
 from pyAffaction import *
 
-SIM = None
-threshold_gaze_vel = 0.0025
-threshold_angle = 10.0 # deg
-objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot']
+
 gaze_start_time = -1.0
+
 # Cross-platform getch function to capture key presses
 def getch():
     """Get a single character from standard input without echo."""
@@ -161,75 +160,8 @@ class MicrophoneStream:
 
 
 
-def process_gaze_data(gaze_data, start_time, threshold_angle, threshold_gaze_vel, objects_not_wanted):
-    first_object_data = []
-    for data_point in gaze_data:
-        current_time = data_point.get("time")
-        current_gaze_vel = data_point.get("gaze_velocity")
-
-        if current_time >= start_time:
-        
-            objects = data_point.get("objects", [])        
-            if objects:
-
-                # Initialize with the first object
-                selected_object_name = objects[0].get("name")
-                selected_object_angle_diff = objects[0].get("angleDiff")
-                selected_object_distance = objects[0].get("distance")
-
-                # Iterate over the rest of the objects
-                for i in range(1, len(objects)):
-                    current_object_name = objects[i].get("name")
-                    current_object_angle_diff = objects[i].get("angleDiff")
-                    current_object_distance = objects[i].get("distance")
-
-                    # Check if the angle difference is below the threshold
-                    if abs(selected_object_angle_diff - current_object_angle_diff) < threshold_angle and selected_object_name in objects_not_wanted:
-                        # If the current object is closer, update the selected object
-                        if current_object_distance < selected_object_distance:
-                            selected_object_name = current_object_name
-                            selected_object_angle_diff = current_object_angle_diff
-                            selected_object_distance = current_object_distance
-                        
 
 
-                if current_gaze_vel <= threshold_gaze_vel:
-                    first_object_data.append((current_time-start_time, selected_object_name, selected_object_angle_diff, current_gaze_vel))
-    return first_object_data
-
-def compute_gaze_history(first_object_data):
-    gaze_history = []
-    objects_timestamps = []  # List to store start and end times for each object
-    current_object = None
-    gaze_start_time = None
-    
-    for i, entry in enumerate(first_object_data):
-        current_time, object_name, angle_diff, gaze_vel = entry
-
-        # Initialize the first object and gaze start time
-        if current_object is None and gaze_start_time is None:
-            current_object = object_name
-            gaze_start_time = current_time
-            continue  # Skip to the next iteration since we just initialized
-
-        # If we're gazing at a new object
-        if object_name != current_object:
-            # Compute the time spent on the previous object
-            gaze_duration = current_time - gaze_start_time
-            gaze_history.append((current_object, gaze_duration))  # Store in s
-            objects_timestamps.append((current_object, gaze_start_time, current_time))
-            
-            # Switch to the new object
-            current_object = object_name
-            gaze_start_time = current_time  # Start time for the new object
-
-    # Handle the last object gazed at (after the loop ends)
-    if current_object is not None and gaze_start_time is not None:
-        gaze_duration = first_object_data[-1][0] - gaze_start_time
-        gaze_history.append((current_object, gaze_duration))
-        objects_timestamps.append((current_object, gaze_start_time, first_object_data[-1][0]))
-
-    return gaze_history, objects_timestamps
 
 
 def plot_closest_objects(first_object_data):
@@ -314,8 +246,112 @@ def plot_gaze_and_speech(gaze_data, words_data):
     
 
 
+class GazeDataManager:
+    def __init__(self, SIM, threshold_angle=10.0, threshold_gaze_vel=0.0025, objects_not_wanted=None):
+        self.SIM = SIM
+        self.threshold_angle = threshold_angle
+        self.threshold_gaze_vel = threshold_gaze_vel
+        self.objects_not_wanted = objects_not_wanted
 
-def key_listener(stream, transcription_queue, plot_speech_queue, plot_gaze_queue):
+    
+    # Setter for threshold_angle
+    def set_threshold_angle(self, threshold_angle):
+        if threshold_angle > 0:
+            self.threshold_angle = threshold_angle
+        else:
+            raise ValueError("Threshold angle must be positive")
+
+    # Setter for threshold_gaze_vel
+    def set_threshold_gaze_vel(self, threshold_gaze_vel):
+        if threshold_gaze_vel > 0:
+            self.threshold_gaze_vel = threshold_gaze_vel
+        else:
+            raise ValueError("Threshold gaze velocity must be positive")
+
+    # Setter for objects_not_wanted
+    def set_objects_not_wanted(self, objects_not_wanted):
+        if isinstance(objects_not_wanted, list):
+            self.objects_not_wanted = objects_not_wanted
+        else:
+            raise ValueError("Objects not wanted must be a list")
+
+    def get_raw_gaze_data(self):
+        return self.SIM.get_gaze_data()
+
+    def get_filtered_gaze_data(self, start_time):
+        gaze_data = self.SIM.get_gaze_data()
+        first_object_data = []
+        for data_point in gaze_data:
+            current_time = data_point.get("time")
+            current_gaze_vel = data_point.get("gaze_velocity")
+
+            if current_time >= start_time:
+            
+                objects = data_point.get("objects", [])        
+                if objects:
+
+                    # Initialize with the first object
+                    selected_object_name = objects[0].get("name")
+                    selected_object_angle_diff = objects[0].get("angleDiff")
+                    selected_object_distance = objects[0].get("distance")
+
+                    # Iterate over the rest of the objects
+                    for i in range(1, len(objects)):
+                        current_object_name = objects[i].get("name")
+                        current_object_angle_diff = objects[i].get("angleDiff")
+                        current_object_distance = objects[i].get("distance")
+
+                        # Check if the angle difference is below the threshold
+                        if abs(selected_object_angle_diff - current_object_angle_diff) < self.threshold_angle and selected_object_name in self.objects_not_wanted:
+                            # If the current object is closer, update the selected object
+                            if current_object_distance < selected_object_distance:
+                                selected_object_name = current_object_name
+                                selected_object_angle_diff = current_object_angle_diff
+                                selected_object_distance = current_object_distance
+                            
+
+
+                    if current_gaze_vel <= self.threshold_gaze_vel:
+                        first_object_data.append((current_time-start_time, selected_object_name, selected_object_angle_diff, current_gaze_vel))
+        return first_object_data
+    
+    def compute_gaze_history(self, first_object_data):
+        gaze_history = []
+        objects_timestamps = []  # List to store start and end times for each object
+        current_object = None
+        gaze_start_time = None
+        
+        for i, entry in enumerate(first_object_data):
+            current_time, object_name, angle_diff, gaze_vel = entry
+
+            # Initialize the first object and gaze start time
+            if current_object is None and gaze_start_time is None:
+                current_object = object_name
+                gaze_start_time = current_time
+                continue  # Skip to the next iteration since we just initialized
+
+            # If we're gazing at a new object
+            if object_name != current_object:
+                # Compute the time spent on the previous object
+                gaze_duration = current_time - gaze_start_time
+                gaze_history.append((current_object, gaze_duration))  # Store in s
+                objects_timestamps.append((current_object, gaze_start_time, current_time))
+                
+                # Switch to the new object
+                current_object = object_name
+                gaze_start_time = current_time  # Start time for the new object
+
+        # Handle the last object gazed at (after the loop ends)
+        if current_object is not None and gaze_start_time is not None:
+            gaze_duration = first_object_data[-1][0] - gaze_start_time
+            gaze_history.append((current_object, gaze_duration))
+            objects_timestamps.append((current_object, gaze_start_time, first_object_data[-1][0]))
+
+        return gaze_history, objects_timestamps
+
+
+
+def key_listener(stream, gaze_manager, transcription_queue, plot_speech_queue, plot_gaze_queue):
     print("Press 's' to start streaming, 'f' to stop streaming, 'e' to exit.")
     while True:
         key = getch()
@@ -323,8 +359,7 @@ def key_listener(stream, transcription_queue, plot_speech_queue, plot_gaze_queue
             if not stream.running:
                 stream.running = True
                 print("\nStarting streaming...")
-                gaze_data = SIM.get_gaze_data()
-                gaze_start_time = gaze_data[-1].get("time")
+                gaze_start_time = getWallclockTime()
                 stream.start_streaming()
                 stream.processing_thread = threading.Thread(target=stream.process_audio)
                 stream.processing_thread.start()
@@ -336,9 +371,8 @@ def key_listener(stream, transcription_queue, plot_speech_queue, plot_gaze_queue
                 stream.running = False
                 stream.processing_thread.join()  # Wait for transcription to finish
                 stream.stop_streaming()
-                gaze_data = SIM.get_gaze_data()
-                filtered_gaze_data = process_gaze_data(gaze_data, gaze_start_time, threshold_angle, threshold_gaze_vel, objects_not_wanted)
-                gaze_history, gazed_objects_timestamps = compute_gaze_history(filtered_gaze_data)
+                filtered_gaze_data = gaze_manager.get_filtered_gaze_data(gaze_start_time)
+                gaze_history, gazed_objects_timestamps = gaze_manager.compute_gaze_history(filtered_gaze_data)
                 print("Gaze history: ", gaze_history)
                 for entry in gazed_objects_timestamps:
                     print(f"Object: '{entry[0]}', start_time: {entry[1]:.2f}s, end_time: {entry[2]:.2f}s")
@@ -365,7 +399,7 @@ def key_listener(stream, transcription_queue, plot_speech_queue, plot_gaze_queue
             print("\nExiting...")
             os._exit(0)  # Force exit
         else:
-            print("\nInvalid key. Press 's' to start, 'q' to stop, 'e' to exit.")
+            print("\nInvalid key. Press 's' to start, 'f' to stop, 'e' to exit.")
 
 def main():
     # Create a command-line parser.
@@ -384,7 +418,10 @@ def main():
     )
     args = parser.parse_args()
 
-    global SIM
+    SIM = None
+    threshold_gaze_vel = 0.0025
+    threshold_angle = 10.0 # deg
+    objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot', 'Daniel']
     setLogLevel(-1)
     SIM = LlmSim()
     SIM.noTextGui = True
@@ -407,9 +444,11 @@ def main():
     plot_speech_queue = queue.Queue()  # Queue to hold data for plotting
     plot_gaze_queue = queue.Queue()
     stream = MicrophoneStream(rate=args.sample_rate, hints_filename=args.hints, transcription_queue=transcription_queue)
+    
+    gaze_manager = GazeDataManager(SIM=SIM, threshold_angle=threshold_angle, threshold_gaze_vel=threshold_gaze_vel, objects_not_wanted=objects_not_wanted)
 
     # Start key listener thread
-    key_thread = threading.Thread(target=key_listener, args=(stream,transcription_queue, plot_speech_queue, plot_gaze_queue))
+    key_thread = threading.Thread(target=key_listener, args=(stream, gaze_manager, transcription_queue, plot_speech_queue, plot_gaze_queue))
     key_thread.daemon = True
     key_thread.start()
 
