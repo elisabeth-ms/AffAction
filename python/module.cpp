@@ -510,6 +510,11 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getGazeData();
   })
 
+  .def("save_gaze_data_to_file", [](aff::ExampleActionsECS& ex, std::string directory, std::string filename)
+  {
+    ex.getQuery()->saveGazeDataToFile(directory,filename);
+  })
+
   //---------------------------- Gaze component ---------------------------------------------//
 
 
@@ -1087,8 +1092,6 @@ PYBIND11_MODULE(pyAffaction, m)
   
   // ----------------- Gaze component ---------------------------------------------- //
   .def_readwrite("saveGazeData", &aff::ExampleActionsECS::saveGazeData)
-  .def_readwrite("gazeDataFileName", &aff::ExampleActionsECS::gazeDataFileName)
-  .def_readwrite("gazeDataDirectory", &aff::ExampleActionsECS::gazeDataDirectory)
   ;
 
 

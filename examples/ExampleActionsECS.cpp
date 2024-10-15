@@ -304,8 +304,7 @@ bool ExampleActionsECS::initParameters()
   // xmlFileName = "g_attentive_support.xml";
   xmlFileName = "g_example_gaze.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
-  gazeDataFileName = "gaze_test_1.csv";
-  gazeDataDirectory = "../../gazeData";
+  // gazeDataDirectory = "../../gazeData";
   saveGazeData = false;
   speedUp = 3;
 
@@ -348,8 +347,6 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-earlyExitAction", &earlyExitAction, "Early exit with action prediction's first error");
 
   // Save gaze data
-  parser->getArgument("-gazeDataFileName", &gazeDataFileName, "Gaze data file name " "(default is %s)", gazeDataFileName.c_str());
-  parser->getArgument("-gazeDataDirectory", &gazeDataDirectory, "Gaze data directory" "(dafault is %s)", gazeDataDirectory.c_str());
   parser->getArgument("-saveGazeData", &saveGazeData, "Enable saving of gaze data" "(default is %d)", saveGazeData);
 
   // This is just for pupulating the parsed command line arguments for the help
@@ -582,8 +579,9 @@ bool ExampleActionsECS::initAlgo()
   // Add the cool GazeComponent
   gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData);
   gazeC->addSceneToAttend(*getScene(), getGraph());
-  if(saveGazeData)
-      gazeC->openFile(gazeDataDirectory+"/"+gazeDataFileName);
+  std::string agentName = gazeC->getAgentName();
+  // if(saveGazeData)
+  //     gazeC->openFile(gazeDataDirectory+"/"+agentName+"_"+gazeDataFileName);
   addComponent(gazeC);
   
   // Printing the help prompt
@@ -609,6 +607,14 @@ bool ExampleActionsECS::initAlgo()
 
   return true;
 }
+
+
+
+void ExampleActionsECS::saveGazeDataToFile(const std::string& directory, const std::string& filename) const
+{
+  gazeC->saveInFile(directory+"/"+gazeC->getAgentName()+"_"+filename);
+}
+
 
 bool ExampleActionsECS::initGraphics()
 {
@@ -1869,6 +1875,7 @@ nlohmann::json ExampleActionsECS::getGazeData() const
     for (const auto& dataPoint : *gazeData) 
     {
         nlohmann::json dataJson;
+        dataJson["agent_name"] = dataPoint.agentName;
         dataJson["time"] = dataPoint.time;
         dataJson["gaze_velocity"] = dataPoint.gazeVel;
 

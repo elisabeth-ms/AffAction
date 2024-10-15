@@ -49,13 +49,14 @@ namespace aff
 
 struct GazeDataPoint {
     double time;  // Time in seconds
+    std::string agentName; // Name of the agent
     std::vector<std::string> objectNames;  // Names of the objects
     std::vector<double> angleDiffs;  // Angle differences to objects in deg
     std::vector<double> distances;   // Distance to each object
     double gazeVel; // Gaze velocity in deg/s
 
-    GazeDataPoint(double t, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_, const std::vector<double>& distances_, double vel)
-        : time(t), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel) {}
+    GazeDataPoint(double t, std::string agentName_, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_, const std::vector<double>& distances_, double vel)
+        : time(t), agentName(agentName_), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel) {}
 };
 
 
@@ -77,11 +78,15 @@ public:
 
   void addSceneToAttend(const ActionScene& scene, const RcsGraph* graph);
   
-  void openFile(const std::string& filename);
+  void saveInFile(const std::string& filename);
   
   // Pointer to gazeData
   const std::deque<GazeDataPoint>* getGazeData() {
       return &gazeData;  
+  }
+
+  std::string getAgentName() const {
+      return agentName;
   }
 
 private:
@@ -96,7 +101,7 @@ private:
   int gazeDirectionIdx;   // 0: x, 1: y, 2: z
   bool saveData;
   double prevHeadDirection[3];
-
+  std::string agentName;
 
   struct BodyIntersection
   {

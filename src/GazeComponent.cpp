@@ -63,6 +63,8 @@ GazeComponent::GazeComponent(EntityBase* parent, const std::string& gazingBody_,
   prevHeadDirection[2] = 0;
 
   subscribe("PostUpdateGraph", &GazeComponent::onPostUpdateGraph);
+
+
 }
 
 GazeComponent::~GazeComponent()
@@ -111,7 +113,20 @@ void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* g
 
 
     objectsToAttend.push_back(bi);
+
   }
+
+  std::vector<const aff::Agent*> agents = scene.getAgents<aff::Agent>();
+  for (const auto& agent : agents)
+  {
+    if (gazingBody.find(agent->name) != std::string::npos)
+    {
+        RLOG(0, "Agent '%s' is in gazingBody: %s", agent->name.c_str(), gazingBody.c_str());
+        agentName = agent->name;
+        break;
+    }
+  }
+
 }
 
 const RcsBody* GazeComponent::getBody(const RcsGraph* graph, const std::string& bdyName, int& bdyId)
@@ -283,7 +298,7 @@ void GazeComponent::writeSortedData(const double time, const std::vector<BodyInt
     file << "\n"; 
 }
 
-void GazeComponent::openFile(const std::string& filename)
+void GazeComponent::saveInFile(const std::string& filename)
 {
 
     file.open(filename, std::ios::out);  // File in write mode
@@ -301,7 +316,7 @@ void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>
       }
 
       // Add the new gaze data
-      gazeData.emplace_back(time, objectNames, angleDiffs, distances, gazeVel);
+      gazeData.emplace_back(time, agentName, objectNames, angleDiffs, distances, gazeVel);
 
       // Remove oldest data points if total duration exceeds the maxDurationGazeData
       while (totalDurationGazeData > maxDurationGazeData && !gazeData.empty()) {

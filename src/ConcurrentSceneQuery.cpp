@@ -494,4 +494,13 @@ nlohmann::json ConcurrentSceneQuery::getGazeData()
   return gazeData;
 }
 
+void ConcurrentSceneQuery::saveGazeDataToFile(const std::string& directory, const std::string& filename)
+{
+  sim->lockStepMtx();
+  sim->saveGazeDataToFile(directory,filename);
+  sim->unlockStepMtx();
+}
+
+
+
 }   // namespace aff

@@ -201,6 +201,7 @@ public:
 
   //---------------------------- Gaze component ------------------------------------------------ //
   nlohmann::json getGazeData();
+  void saveGazeDataToFile(const std::string& directory,const std::string& filename);
   //---------------------------- Gaze component ------------------------------------------------ //
 
 
