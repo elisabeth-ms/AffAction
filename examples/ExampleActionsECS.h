@@ -62,6 +62,7 @@
 
 //---------------------------- Gaze component ------------------------------------------------ //
 #include "GazeComponent.h"
+
 //---------------------------- Gaze component ------------------------------------------------ //
 
 
@@ -144,6 +145,7 @@ public:
   bool saveGazeData;
   nlohmann::json getGazeData() const;
   void saveGazeDataToFile(const std::string& directory,const std::string& filename) const;
+  double maxGazeAngleDiff;
 //---------------------------- Gaze component ------------------------------------------------ //
 
 

@@ -43,6 +43,8 @@
 #include <iostream>
 #include <fstream>
 
+#define DEFAULT_MAX_GAZE_ANGLE_DIFF 50.0
+
 namespace aff
 {
 
@@ -69,7 +71,7 @@ public:
    * \param[in] parent    Entity class responsible for event subscriptions
    */
   GazeComponent(EntityBase* parent, const std::string& gazingBody,
-                int dirIdx = 1, double maxDurationGazeData=20, bool saveData=false);
+                int dirIdx = 1, double maxDurationGazeData=20, bool saveData=false, double maxGazeAngleDiff=DEFAULT_MAX_GAZE_ANGLE_DIFF);
 
   /*! \brief Unsubscribes and deletes all previously allocated memory.
    *         There is no thread that needs to be stopped.
@@ -102,6 +104,8 @@ private:
   bool saveData;
   double prevHeadDirection[3];
   std::string agentName;
+
+  double maxGazeAngleDiff;
 
   struct BodyIntersection
   {

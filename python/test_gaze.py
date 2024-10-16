@@ -85,6 +85,7 @@ sim.saveGazeData = False
 sim.gazeDataFileName = "test_from_python.csv"
 sim.xmlFileName = "g_example_gaze.xml"
 sim.init(True)
+sim.maxGazeAngleDiff = 60.0
 sim.addTTS("native")
 
 camera_name = "camera_0" 

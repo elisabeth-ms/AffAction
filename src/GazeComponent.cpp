@@ -44,7 +44,6 @@
 
 
 #define GAZEOBJECT_MAX_EXTENTS (1.0)   // Ignore everything with an extent larger than this
-#define DEFAULT_MAX_GAZE_ANGLE (60.0)
 
 /*
 This class computes the intersection of a gazing body (head) with a set of objects
@@ -54,9 +53,9 @@ that it should attend to. The gaze direction is the head's y-axis.
 namespace aff
 {
 
-GazeComponent::GazeComponent(EntityBase* parent, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_) :
-  ComponentBase(parent), gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_),
-  saveData(saveData_)
+GazeComponent::GazeComponent(EntityBase* parent, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_, double maxGazeAngleDiff_) :
+  ComponentBase(parent), gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), 
+  saveData(saveData_), maxGazeAngleDiff(maxGazeAngleDiff_)
 {
   prevHeadDirection[0] = 0;
   prevHeadDirection[1] = 0;
@@ -242,7 +241,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
     return a.gazeAngle < b.gazeAngle;
   });
 
-  if (!objectsToAttend.empty() && objectsToAttend.front().gazeAngle < DEFAULT_MAX_GAZE_ANGLE)  // TODO: Change to a variable passed during execution to avoid recompilation.
+  if (!objectsToAttend.empty() && objectsToAttend.front().gazeAngle*(180.0/M_PI) < maxGazeAngleDiff)  // TODO: Change to a variable passed during execution to avoid recompilation.
   {
       REXEC(2)
       {
@@ -260,6 +259,10 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
       std::vector<double> distances;
       for (const auto& o : objectsToAttend)
       {
+          if(o.gazeAngle*(180.0/M_PI) > maxGazeAngleDiff)
+          {
+              break;
+          }
           objectNames.push_back(o.name);
           gazeAngles.push_back((180.0 / M_PI) * o.gazeAngle);  // Convert to degrees
           distances.push_back(o.objectPointDistance);

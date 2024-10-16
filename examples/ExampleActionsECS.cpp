@@ -307,6 +307,7 @@ bool ExampleActionsECS::initParameters()
   // gazeDataDirectory = "../../gazeData";
   saveGazeData = false;
   speedUp = 3;
+  maxGazeAngleDiff = DEFAULT_MAX_GAZE_ANGLE_DIFF;
 
   return true;
 }
@@ -348,6 +349,7 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
 
   // Save gaze data
   parser->getArgument("-saveGazeData", &saveGazeData, "Enable saving of gaze data" "(default is %d)", saveGazeData);
+  parser->getArgument("-maxGazeAngleDiff", &maxGazeAngleDiff, "Maximum gaze angle difference" "(default is %f)", maxGazeAngleDiff);
 
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
@@ -577,7 +579,7 @@ bool ExampleActionsECS::initAlgo()
   }
 
   // Add the cool GazeComponent
-  gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData);
+  gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData, maxGazeAngleDiff);
   gazeC->addSceneToAttend(*getScene(), getGraph());
   std::string agentName = gazeC->getAgentName();
   // if(saveGazeData)
