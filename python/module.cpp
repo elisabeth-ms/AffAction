@@ -515,8 +515,12 @@ PYBIND11_MODULE(pyAffaction, m)
     ex.getQuery()->saveGazeDataToFile(directory,filename);
   })
 
-  //---------------------------- Gaze component ---------------------------------------------//
+  //---------------------------- SkeletonDataRecorder component ---------------------------------------------//
 
+  .def("get_recorded_transformations", [](aff::ExampleActionsECS& ex, double start_time, double end_time) -> nlohmann::json
+  {
+    return ex.getQuery()->getRecordedTransformations(start_time, end_time);
+  })
 
   //////////////////////////////////////////////////////////////////////////////
   // Returns an empty string if there are no objects held in the hand, or the

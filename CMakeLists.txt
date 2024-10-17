@@ -282,6 +282,7 @@ src/VirtualCamera.cpp
 src/VirtualCameraWindow.cpp
 src/StringParserTools.cpp
 src/PW70Component.cpp
+src/SceneTransformationDataRecorder.cpp
 )
 
 SET(ECS_SRCS

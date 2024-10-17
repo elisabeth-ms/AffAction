@@ -62,9 +62,8 @@
 
 //---------------------------- Gaze component ------------------------------------------------ //
 #include "GazeComponent.h"
-
-//---------------------------- Gaze component ------------------------------------------------ //
-
+//---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
+#include "SceneTransformationDataRecorder.h"
 
 
 extern "C" {
@@ -146,8 +145,9 @@ public:
   nlohmann::json getGazeData() const;
   void saveGazeDataToFile(const std::string& directory,const std::string& filename) const;
   double maxGazeAngleDiff;
-//---------------------------- Gaze component ------------------------------------------------ //
 
+  //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
+  nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
 
 protected:
 
@@ -216,8 +216,9 @@ protected:
 
   GazeComponent * gazeC;
 
-  //---------------------------- Gaze component ------------------------------------------------ //
+  //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 
+  SceneTransformationDataRecorder * sceneTransformationDataRecorder;
 };
 
 }   // namespace aff

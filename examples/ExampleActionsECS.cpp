@@ -302,7 +302,7 @@ ExampleActionsECS::~ExampleActionsECS()
 bool ExampleActionsECS::initParameters()
 {
   // xmlFileName = "g_attentive_support.xml";
-  xmlFileName = "g_example_gaze.xml";
+  xmlFileName = "g_example_cola_two_glasses.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
   // gazeDataDirectory = "../../gazeData";
   saveGazeData = false;
@@ -578,6 +578,9 @@ bool ExampleActionsECS::initAlgo()
                                                     virtualCameraWidth, virtualCameraHeight);
   }
 
+
+
+
   // Add the cool GazeComponent
   gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData, maxGazeAngleDiff);
   gazeC->addSceneToAttend(*getScene(), getGraph());
@@ -585,7 +588,14 @@ bool ExampleActionsECS::initAlgo()
   // if(saveGazeData)
   //     gazeC->openFile(gazeDataDirectory+"/"+agentName+"_"+gazeDataFileName);
   addComponent(gazeC);
-  
+
+  // Add the SceneTransformationDataRecorder
+  double timeRecording = 30.0;
+
+  sceneTransformationDataRecorder = new SceneTransformationDataRecorder(&entity, int(timeRecording/dt));
+  sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
+  addComponent(sceneTransformationDataRecorder);
+
   // Printing the help prompt
   RLOG_CPP(1, help());
 
@@ -1901,8 +1911,67 @@ nlohmann::json ExampleActionsECS::getGazeData() const
 
     return gazeDataJson;  // Return the JSON array of all gaze data points
 }
-//---------------------------- Gaze component ------------------------------------------------ //
 
+//---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
+nlohmann::json ExampleActionsECS::getRecordedTransformations(double start_time, double end_time) const{
+    nlohmann::json recordedTransformationsJson = nlohmann::json::array();  // Create an empty JSON array
+    const std::deque<TransformationRecord> recordedTransformations = sceneTransformationDataRecorder->getRecordedTransformations();
+
+
+
+    // Iterate through the recorded transformations in the deque
+    for (const auto& record : recordedTransformations)
+    {
+        // Only process records within the specified time range
+        if (record.time >= start_time && record.time <= end_time)
+        {
+            // Create a JSON object for the current record
+            nlohmann::json recordJson;
+            recordJson["time"] = record.time;
+
+            // Create an array of transformations for this record
+            nlohmann::json transformationsJson = nlohmann::json::array();
+
+            for (const auto& transformation : record.transformations)
+            {
+                nlohmann::json transformationJson;
+                transformationJson["parent"] = transformation.parent;
+                transformationJson["child"] = transformation.child;
+
+                // Store the relative transformation matrix
+                nlohmann::json relativeTransformationJson;
+                for (int i = 0; i < 3; ++i)
+                {
+                    relativeTransformationJson["position"].push_back(transformation.relativeTransformation.org[i]);
+                }
+
+                // Store the rotation matrix as a 3x3 array
+                nlohmann::json rotationJson = nlohmann::json::array();
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        rotationJson.push_back(transformation.relativeTransformation.rot[i][j]);
+                    }
+                }
+                relativeTransformationJson["rotation"] = rotationJson;
+
+                // Add the transformation JSON to the list of transformations
+                transformationJson["relative_transformation"] = relativeTransformationJson;
+                transformationsJson.push_back(transformationJson);
+            }
+
+            // Add the transformations array to the record JSON object
+            recordJson["transformations"] = transformationsJson;
+
+            // Add this record to the final JSON array
+            recordedTransformationsJson.push_back(recordJson);
+        }
+    }
+
+    return recordedTransformationsJson;  // Return the JSON array of all recorded transformation data points
+
+}
 
 
 /*******************************************************************************

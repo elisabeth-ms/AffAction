@@ -392,6 +392,9 @@ def key_listener(stream, gaze_manager, transcription_queue, plot_speech_queue, p
                     plot_speech_queue.put(word_data)
                 plot_gaze_queue.put(filtered_gaze_data)
                 save_gaze_data_to_json(input_data_directory_path+"/gaze", filename, raw_gaze_data, gaze_start_time)
+                global SIM
+                json_transformations = SIM.get_recorded_transformations(gaze_start_time, getWallclockTime())
+                save_transformations_data_to_json(input_data_directory_path+"/transformations", filename, json_transformations)
             else:
                 print("\nNot streaming.")
         elif key == 'e':
@@ -453,8 +456,14 @@ def save_gaze_data_to_json(directory, file_name, raw_gaze_data, start_time):
     with open(directory+"/"+file_name, 'w') as f:
         json.dump(raw_data_from_start_time, f, indent=4)
 
+def save_transformations_data_to_json(directory, file_name, json_transformations):
+    # Save the raw gaze data to a JSON file
+    with open(directory+"/"+file_name, 'w') as f:
+        json.dump(json_transformations, f, indent=4)
+
 input_data_directory_path = None
 test_number = 1
+SIM = None
 
 def main():
     # Create a command-line parser.
@@ -472,16 +481,16 @@ def main():
         help="Name of the file containing hints for the ASR as one phrase per line [default: None]",
     )
     args = parser.parse_args()
-
-    SIM = None
+    
     threshold_gaze_vel = 0.0025
     threshold_angle = 10.0 # deg
     objects_not_wanted = ['Johnnie', 'hand_left_robot', 'hand_right_robot', 'Daniel']
     setLogLevel(-1)
+    global SIM
     SIM = LlmSim()
     SIM.noTextGui = True
     SIM.unittest = False
-    SIM.speedUp = 3
+    SIM.speedUp = 1
     SIM.noLimits = False
     SIM.verbose = False
     SIM.saveGazeData = False
@@ -510,6 +519,8 @@ def main():
     os.makedirs(os.path.join(input_data_directory_path, "speech"))
     # Create folder for gaze data
     os.makedirs(os.path.join(input_data_directory_path, "gaze"))
+    # Create folder for transformations data
+    os.makedirs(os.path.join(input_data_directory_path, "transformations"))
     
     objects_in_scene = SIM.get_objects()['objects']
     print("Objects in scene: ", objects_in_scene)
