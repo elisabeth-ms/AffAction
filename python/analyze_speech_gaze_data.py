@@ -2,6 +2,47 @@ import os
 import json
 import matplotlib.pyplot as plt
 import random
+import platform
+import sys
+import getch
+
+if platform.system() == "Linux":
+    sys.path.append("lib")
+elif platform.system() == "Windows":
+    sys.path.append("bin")
+
+from pyAffaction import *
+
+setLogLevel(-1)
+
+sim = LlmSim()
+sim.noTextGui = True
+sim.unittest = False
+sim.speedUp = 1
+sim.noLimits = False
+sim.verbose = False
+sim.xmlFileName = "g_example_cola_two_glasses.xml"
+sim.init(True)
+sim.run()
+
+# Cross-platform getch function to capture key presses
+def getch():
+    """Get a single character from standard input without echo."""
+    import sys
+    if sys.platform.startswith('win'):
+        import msvcrt
+        return msvcrt.getch().decode()
+    else:
+        import tty
+        import termios
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+            return ch
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 # Function to find the folder of a specific test
 def find_test_folder(base_directory, test_number):
@@ -165,6 +206,7 @@ def process_test_data(base_directory, test_number):
     # Define directories for gaze and speech data
     gaze_folder = os.path.join(test_folder, 'gaze')
     speech_folder = os.path.join(test_folder, 'speech')
+    transformations_folder = os.path.join(test_folder, 'transformations')
 
     if not os.path.exists(gaze_folder) or not os.path.exists(speech_folder):
         print("Gaze or speech folder not found in the test folder.")
@@ -173,15 +215,17 @@ def process_test_data(base_directory, test_number):
     # Get all JSON files in the gaze and speech folders
     gaze_files = sorted(os.listdir(gaze_folder))
     speech_files = sorted(os.listdir(speech_folder))
+    transformations_files = sorted(os.listdir(transformations_folder))
 
     # Filter JSON files
     gaze_files = [f for f in gaze_files if f.endswith('.json')]
     speech_files = [f for f in speech_files if f.endswith('.json')]
+    transformations_files = [f for f in transformations_files if f.endswith('.json')]
 
     # Process corresponding gaze and speech files
-    for gaze_file, speech_file in zip(gaze_files, speech_files):
-        if gaze_file != speech_file:
-            print(f"Mismatch between gaze and speech file names: {gaze_file} and {speech_file}")
+    for gaze_file, speech_file, transformations_file in zip(gaze_files, speech_files, transformations_files):
+        if gaze_file != speech_file or gaze_file != transformations_file:
+            print(f"Mismatch between gaze, speech, transformations file names: {gaze_file}, {speech_file} and {transformations_file}")
             continue
         
         print(f"Processing: {gaze_file}")
@@ -189,6 +233,10 @@ def process_test_data(base_directory, test_number):
         # Read gaze and speech data
         gaze_data = read_json_file(os.path.join(gaze_folder, gaze_file))
         speech_data = read_json_file(os.path.join(speech_folder, speech_file))
+        sim.load_transformation_data_from_file(os.path.join(transformations_folder, transformations_file))
+
+
+
 
         start_listening_time = speech_data['listening_start_time']
         end_listening_time = speech_data['listening_end_time']
@@ -210,7 +258,17 @@ def process_test_data(base_directory, test_number):
         # Extract relevant information and plot the data
         plot_gaze_and_speech_data(gaze_data, speech_data)
         plot_angle_diff_over_time(gaze_data, start_listening_time, end_listening_time)
-        plt.show()
+        sim.start_playback_transformation_data()
+        # plt.show()
+
+        replay = True
+        while replay:
+            sim.start_playback_transformation_data()
+            # if 'c' key is pressed, we continue to the next file
+            key = getch()
+            if key == 'c':
+                replay = False
+
 
 
 

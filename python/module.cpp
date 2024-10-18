@@ -522,6 +522,17 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getRecordedTransformations(start_time, end_time);
   })
 
+  //---------------------------- SceneTransformationDataPlayer component ---------------------------------------------//
+  .def("load_transformation_data_from_file", [](aff::ExampleActionsECS& ex, std::string filename)
+  {
+    ex.getQuery()->loadTransformationDataFromFile(filename);
+  })
+
+  .def("start_playback_transformation_data", [](aff::ExampleActionsECS& ex)
+  {
+    ex.getQuery()->startPlaybackTransformationData();
+  })
+
   //////////////////////////////////////////////////////////////////////////////
   // Returns an empty string if there are no objects held in the hand, or the
   // name of the holding hand

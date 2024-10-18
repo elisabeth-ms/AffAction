@@ -18,6 +18,7 @@ struct BodyTransformation
     std::string parent;
     std::string child;
     HTr relativeTransformation;
+    BodyTransformation() = default;
 
     BodyTransformation(const std::string& parent_, const std::string& child_, const HTr& relativeTrf)
         : parent(parent_), child(child_), relativeTransformation(relativeTrf)
@@ -33,7 +34,7 @@ struct TransformationRecord
 {
     double time;
     std::vector<BodyTransformation> transformations;
-
+    TransformationRecord() = default;
     TransformationRecord(double t)
         : time(t)
     {

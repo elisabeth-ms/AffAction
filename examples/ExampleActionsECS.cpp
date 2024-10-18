@@ -591,10 +591,15 @@ bool ExampleActionsECS::initAlgo()
 
   // Add the SceneTransformationDataRecorder
   double timeRecording = 30.0;
-
   sceneTransformationDataRecorder = new SceneTransformationDataRecorder(&entity, int(timeRecording/dt));
   sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
   addComponent(sceneTransformationDataRecorder);
+
+  // Add the SceneTransformationDataPlayer
+  // sceneTransformationDataPlayer = new SceneTransformationDataPlayer(&entity);
+  // sceneTransformationDataPlayer->getRobotBodies(getGraph());
+  // addComponent(sceneTransformationDataPlayer);
+
 
   // Printing the help prompt
   RLOG_CPP(1, help());
@@ -627,6 +632,15 @@ void ExampleActionsECS::saveGazeDataToFile(const std::string& directory, const s
   gazeC->saveInFile(directory+"/"+gazeC->getAgentName()+"_"+filename);
 }
 
+void ExampleActionsECS::loadTransformationDataFromFile(const std::string& filename) const
+{
+  sceneTransformationDataPlayer->loadFromFile(filename);
+}
+
+void ExampleActionsECS::startPlaybackTransformationData() const
+{
+  sceneTransformationDataPlayer->startPlayback();
+}
 
 bool ExampleActionsECS::initGraphics()
 {

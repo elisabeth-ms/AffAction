@@ -64,6 +64,7 @@
 #include "GazeComponent.h"
 //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 #include "SceneTransformationDataRecorder.h"
+#include "SceneTransformationDataPlayer.h"
 
 
 extern "C" {
@@ -149,6 +150,10 @@ public:
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
   nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
 
+  //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
+  void loadTransformationDataFromFile(const std::string& filename) const;
+  void startPlaybackTransformationData() const;
+
 protected:
 
   EntityBase entity;
@@ -219,6 +224,10 @@ protected:
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 
   SceneTransformationDataRecorder * sceneTransformationDataRecorder;
+
+  //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
+  SceneTransformationDataPlayer * sceneTransformationDataPlayer;
+
 };
 
 }   // namespace aff

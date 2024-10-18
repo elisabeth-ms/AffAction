@@ -205,6 +205,10 @@ public:
   //---------------------------- SkeletonDataRecorder component ------------------------------------------------ //
   nlohmann::json getRecordedTransformations(double start_time, double end_time);
 
+  //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
+  void loadTransformationDataFromFile(const std::string& filename);
+  void startPlaybackTransformationData();
+
 private:
 
   void update(bool withBroadphase = false);

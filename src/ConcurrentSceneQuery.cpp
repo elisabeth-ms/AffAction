@@ -509,4 +509,18 @@ nlohmann::json ConcurrentSceneQuery::getRecordedTransformations(double start_tim
   return json;
 }
 
+void ConcurrentSceneQuery::loadTransformationDataFromFile(const std::string& filename)
+{
+  sim->lockStepMtx();
+  sim->loadTransformationDataFromFile(filename);
+  sim->unlockStepMtx();
+}
+
+void ConcurrentSceneQuery::startPlaybackTransformationData()
+{
+  sim->lockStepMtx();
+  sim->startPlaybackTransformationData();
+  sim->unlockStepMtx();
+}
+
 }   // namespace aff
