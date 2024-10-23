@@ -307,7 +307,9 @@ bool ExampleActionsECS::initParameters()
   // gazeDataDirectory = "../../gazeData";
   saveGazeData = false;
   speedUp = 3;
+  recordTransformations = false;
   maxGazeAngleDiff = DEFAULT_MAX_GAZE_ANGLE_DIFF;
+  playTransformations = false;
 
   return true;
 }
@@ -350,7 +352,8 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   // Save gaze data
   parser->getArgument("-saveGazeData", &saveGazeData, "Enable saving of gaze data" "(default is %d)", saveGazeData);
   parser->getArgument("-maxGazeAngleDiff", &maxGazeAngleDiff, "Maximum gaze angle difference" "(default is %f)", maxGazeAngleDiff);
-
+  parser->getArgument("-recordTransformations", &recordTransformations, "Enable recording of transformations" "(default is %d)", recordTransformations);
+  parser->getArgument("-playTransformations", &playTransformations, "Enable playing of transformations" "(default is %d)", playTransformations);
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
   const bool dryRun = true;
@@ -590,15 +593,22 @@ bool ExampleActionsECS::initAlgo()
   addComponent(gazeC);
 
   // Add the SceneTransformationDataRecorder
-  double timeRecording = 30.0;
-  sceneTransformationDataRecorder = new SceneTransformationDataRecorder(&entity, int(timeRecording/dt));
-  sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
-  addComponent(sceneTransformationDataRecorder);
+  if (recordTransformations)
+  {
+    RLOG(0, "Recording transformations");
+    double timeRecording = 30.0;
+    sceneTransformationDataRecorder = new SceneTransformationDataRecorder(&entity, int(timeRecording/dt));
+    sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
+    addComponent(sceneTransformationDataRecorder);
+  }
+  if (playTransformations)
+  {
+    RLOG(0, "Playing transformations");
+    sceneTransformationDataPlayer = new SceneTransformationDataPlayer(&entity);
+    sceneTransformationDataPlayer->getRobotBodies(getGraph());
+    addComponent(sceneTransformationDataPlayer);
+  }
 
-  // Add the SceneTransformationDataPlayer
-  // sceneTransformationDataPlayer = new SceneTransformationDataPlayer(&entity);
-  // sceneTransformationDataPlayer->getRobotBodies(getGraph());
-  // addComponent(sceneTransformationDataPlayer);
 
 
   // Printing the help prompt
@@ -1915,6 +1925,8 @@ nlohmann::json ExampleActionsECS::getGazeData() const
             objectJson["name"] = dataPoint.objectNames[i];
             objectJson["angleDiff"] = dataPoint.angleDiffs[i];
             objectJson["distance"] = dataPoint.distances[i];
+            objectJson["angleDiffXY"] = dataPoint.angleDiffsXY[i];
+            objectJson["angleDiffXZ"] = dataPoint.angleDiffsXZ[i];
             objectsJson.push_back(objectJson);
         }
         dataJson["objects"] = objectsJson;

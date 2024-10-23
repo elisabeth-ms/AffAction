@@ -55,10 +55,14 @@ struct GazeDataPoint {
     std::vector<std::string> objectNames;  // Names of the objects
     std::vector<double> angleDiffs;  // Angle differences to objects in deg
     std::vector<double> distances;   // Distance to each object
+    std::vector<double> angleDiffsXY;  // Gaze angles in XY plane
+    std::vector<double> angleDiffsXZ;  // Gaze angles in YZ plane
     double gazeVel; // Gaze velocity in deg/s
 
-    GazeDataPoint(double t, std::string agentName_, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_, const std::vector<double>& distances_, double vel)
-        : time(t), agentName(agentName_), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel) {}
+    GazeDataPoint(double t, std::string agentName_, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_,
+     const std::vector<double>& distances_, double vel, const std::vector<double>& angleDiffsXY_, const std::vector<double>& angleDiffsXZ_)
+        : time(t), agentName(agentName_), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel),
+          angleDiffsXY(angleDiffsXY_), angleDiffsXZ(angleDiffsXZ_) {}
 };
 
 
@@ -120,10 +124,14 @@ private:
     int bdyId;
     double gazeAngle;
     double objectPointDistance;
+    double gazeAngleXY;
+    double gazeAngleXZ;
   };
 
   std::vector<BodyIntersection> objectsToAttend;
   std::ofstream file;  // File stream object
+
+  
   
   void writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel);
 
@@ -133,7 +141,9 @@ private:
   double maxDurationGazeData;
   double totalDurationGazeData;
 
-  void addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& diffAngles, const std::vector<double>& distances, double gazeVel);
+  void addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& diffAngles, 
+                        const std::vector<double>& distances, double gazeVel, const std::vector<double>& angleDiffsXY, 
+                        const std::vector<double>& angleDiffsXZ);
 
   void removeOldestGazeDataPoint();
 

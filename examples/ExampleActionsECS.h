@@ -149,10 +149,12 @@ public:
 
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
   nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
+  bool recordTransformations;
 
   //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
   void loadTransformationDataFromFile(const std::string& filename) const;
   void startPlaybackTransformationData() const;
+  bool playTransformations;
 
 protected:
 

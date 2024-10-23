@@ -1108,6 +1108,9 @@ PYBIND11_MODULE(pyAffaction, m)
   // ----------------- Gaze component ---------------------------------------------- //
   .def_readwrite("saveGazeData", &aff::ExampleActionsECS::saveGazeData)
   .def_readwrite("maxGazeAngleDiff", &aff::ExampleActionsECS::maxGazeAngleDiff)
+  .def_readwrite("recordTransformations", &aff::ExampleActionsECS::recordTransformations)
+  .def_readwrite("playTransformations", &aff::ExampleActionsECS::playTransformations)
+
   ;
 
 

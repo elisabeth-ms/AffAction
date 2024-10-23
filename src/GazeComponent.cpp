@@ -158,6 +158,13 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   const double* eyePos = head->A_BI.org;
   const double* gazeDir = head->A_BI.rot[gazeDirectionIdx];   // y-axis
 
+  // Lets try the angle difference in the x-y plane
+
+  double gazeDirXY[3];
+  Vec3d_set(gazeDirXY, gazeDir[0], gazeDir[1], 0);
+  double gazeDirXZ[3];
+  Vec3d_set(gazeDirXZ, gazeDir[0], 0, gazeDir[2]); 
+
 
   // This is kind of a saccade suppression. If the gaze point moves quickly, we
   // suppress the attention mechanism so that objects we just pass by gazing
@@ -208,11 +215,21 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
           Vec3d_set(p, point[0], point[1], point[2]);
           // RLOG(1, "Point: (%f, %f, %f)", p[0], p[1],p[2]);
           Vec3d_sub(eye_obj, p, eyePos);
+
+          double eye_objXY[3];
+          Vec3d_set(eye_objXY, eye_obj[0], eye_obj[1], 0);
+          double eye_objXZ[3];
+          Vec3d_set(eye_objXZ, eye_obj[0], 0, eye_obj[2]);
+
           double angle = Vec3d_diffAngle(eye_obj, gazeDir);
+          double angleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
+          double angleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
           // RLOG(1, "Angle %f", angle*180.0/M_PI);
           if(angle<o.gazeAngle){
             o.gazeAngle = angle;
             o.objectPointDistance = Vec3d_distance(p, eyePos);
+            o.gazeAngleXY = angleXY;
+            o.gazeAngleXZ = angleXZ;
           }
         }
       }
@@ -222,8 +239,14 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
         Vec3d_set(centroid, 0.5*(xyzMin[0]+xyzMax[0]), 0.5*(xyzMin[1]+xyzMax[1]), 0.5*(xyzMin[2]+xyzMax[2]));
         objPos = centroid;
         Vec3d_sub(eye_obj, objPos, eyePos);
+        double eye_objXY[3];
+        Vec3d_set(eye_objXY, eye_obj[0], eye_obj[1], 0);
+        double eye_objXZ[3];
+        Vec3d_set(eye_objXZ, eye_obj[0], 0, eye_obj[2]);
         o.objectPointDistance = Vec3d_distance(objPos, eyePos);
         o.gazeAngle = Vec3d_diffAngle(eye_obj, gazeDir);
+        o.gazeAngleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
+        o.gazeAngleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
       }
 
     }
@@ -241,7 +264,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
     return a.gazeAngle < b.gazeAngle;
   });
 
-  if (!objectsToAttend.empty() && objectsToAttend.front().gazeAngle*(180.0/M_PI) < maxGazeAngleDiff)  // TODO: Change to a variable passed during execution to avoid recompilation.
+  if (!objectsToAttend.empty())  // TODO: Change to a variable passed during execution to avoid recompilation.
   {
       REXEC(2)
       {
@@ -257,6 +280,8 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
       std::vector<std::string> objectNames;
       std::vector<double> gazeAngles;
       std::vector<double> distances;
+      std::vector<double> gazeAnglesXY;
+      std::vector<double> gazeAnglesXZ;
       for (const auto& o : objectsToAttend)
       {
           if(o.gazeAngle*(180.0/M_PI) > maxGazeAngleDiff)
@@ -266,11 +291,21 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
           objectNames.push_back(o.name);
           gazeAngles.push_back((180.0 / M_PI) * o.gazeAngle);  // Convert to degrees
           distances.push_back(o.objectPointDistance);
+          gazeAnglesXY.push_back((180.0 / M_PI) * o.gazeAngleXY);
+          gazeAnglesXZ.push_back((180.0 / M_PI) * o.gazeAngleXZ);
       }
 
       // Add data to deque
       double currentTime = Timer_getSystemTime();
-      addGazeDataPoint(currentTime, objectNames, gazeAngles, distances, gazeVel);
+      if(!gazeData.empty())
+      {
+          gazeVel = gazeVel*(180.0/M_PI)*100.0; // 100 Hz
+      }
+      else
+      {
+          gazeVel = 0;
+      }
+      addGazeDataPoint(currentTime, objectNames, gazeAngles, distances, gazeVel, gazeAnglesXY, gazeAnglesXZ);
 
 
       t_calc = Timer_getSystemTime() - t_calc;
@@ -278,7 +313,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
       if(saveData){
           writeSortedData(Timer_getSystemTime(), objectsToAttend, gazeVel);
       }
-      RLOG(1, "Took %.3f usec, gazeVel is %.3f", 1000.0 * t_calc, (180.0 / M_PI)* gazeVel);
+      RLOG(1, "Took %.3f usec, gazeVel is %.3f", 1000.0 * t_calc, gazeVel);
       RLOG(1, "Omega vector: (%.3f, %.3f, %.3f)", head->omega[0], head->omega[1], head->omega[2]);
       RLOG(1, "Number of gazeData elements stored: %ld with a total duration: %.3f", gazeData.size(), totalDurationGazeData);
       RLOG(1, "Oldest object in deque: %s Newest object in deque: %s", gazeData.front().objectNames[0].c_str(), gazeData.back().objectNames[0].c_str());
@@ -311,7 +346,9 @@ void GazeComponent::saveInFile(const std::string& filename)
 }
 
 
-void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& angleDiffs, const std::vector<double>& distances, double gazeVel)
+void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& angleDiffs,
+                                     const std::vector<double>& distances, double gazeVel, const std::vector<double>& angleDiffsXY,
+                                     const std::vector<double>& angleDiffsXZ)
 {
       
       if (!gazeData.empty()) {
@@ -319,7 +356,7 @@ void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>
       }
 
       // Add the new gaze data
-      gazeData.emplace_back(time, agentName, objectNames, angleDiffs, distances, gazeVel);
+      gazeData.emplace_back(time, agentName, objectNames, angleDiffs, distances, gazeVel, angleDiffsXY, angleDiffsXZ);
 
       // Remove oldest data points if total duration exceeds the maxDurationGazeData
       while (totalDurationGazeData > maxDurationGazeData && !gazeData.empty()) {
