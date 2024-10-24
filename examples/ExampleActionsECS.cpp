@@ -302,7 +302,7 @@ ExampleActionsECS::~ExampleActionsECS()
 bool ExampleActionsECS::initParameters()
 {
   // xmlFileName = "g_attentive_support.xml";
-  xmlFileName = "g_example_cola_two_glasses.xml";
+  xmlFileName = "g_group_6.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
   // gazeDataDirectory = "../../gazeData";
   saveGazeData = false;
@@ -582,15 +582,29 @@ bool ExampleActionsECS::initAlgo()
   }
 
 
+  std::vector<const Agent*> agents = getScene()->getAgents<Agent>();
+  RLOG(0, "Number of agents: %ld", agents.size());
 
-
-  // Add the cool GazeComponent
-  gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData, maxGazeAngleDiff);
-  gazeC->addSceneToAttend(*getScene(), getGraph());
-  std::string agentName = gazeC->getAgentName();
-  // if(saveGazeData)
-  //     gazeC->openFile(gazeDataDirectory+"/"+agentName+"_"+gazeDataFileName);
-  addComponent(gazeC);
+  for (const auto& agent : agents)
+  {
+    RLOG(0, "Agent: %s", agent->name.c_str());
+    if (agent->name != "Johnnie") // We exclude the robot called "Johnnie"
+    {
+      // Add the cool GazeComponent
+      GazeComponent* gazeC = new GazeComponent(&entity, agent->name, "Head_"+agent->name, 1, 10, saveGazeData, maxGazeAngleDiff);
+      gazeC->addSceneToAttend(*getScene(), getGraph());
+      gazeComponents.push_back(gazeC);
+      addComponent(gazeC);
+    }
+    
+  }
+  // // Add the cool GazeComponent
+  // gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData, maxGazeAngleDiff);
+  // gazeC->addSceneToAttend(*getScene(), getGraph());
+  // std::string agentName = gazeC->getAgentName();
+  // // if(saveGazeData)
+  // //     gazeC->openFile(gazeDataDirectory+"/"+agentName+"_"+gazeDataFileName);
+  // addComponent(gazeC);
 
   // Add the SceneTransformationDataRecorder
   if (recordTransformations)
@@ -639,7 +653,8 @@ bool ExampleActionsECS::initAlgo()
 
 void ExampleActionsECS::saveGazeDataToFile(const std::string& directory, const std::string& filename) const
 {
-  gazeC->saveInFile(directory+"/"+gazeC->getAgentName()+"_"+filename);
+  // gazeC->saveInFile(directory+"/"+gazeC->getAgentName()+"_"+filename);
+  ;
 }
 
 void ExampleActionsECS::loadTransformationDataFromFile(const std::string& filename) const
@@ -1906,34 +1921,65 @@ std::string ExampleActionsECS::getComponentArguments() const
 nlohmann::json ExampleActionsECS::getGazeData() const
 {
     nlohmann::json gazeDataJson = nlohmann::json::array();  // Create an empty JSON array
-    const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
-    // Iterate over the gazeData deque
-    for (const auto& dataPoint : *gazeData) 
-    {
-        nlohmann::json dataJson;
-        dataJson["agent_name"] = dataPoint.agentName;
-        dataJson["time"] = dataPoint.time;
-        dataJson["gaze_velocity"] = dataPoint.gazeVel;
+    // We need to loop all gaze components
+    for (const auto gazeC: gazeComponents){
+        nlohmann::json userGazeDataJson;
+        userGazeDataJson["agent_name"] = gazeC->getAgentName();
+ 
+        const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
+        // Iterate over the gazeData deque
+        nlohmann::json dataJson = nlohmann::json::array();
+        for(const auto& dataPoint : *gazeData){
+            nlohmann::json dataPointJson;
+            dataPointJson["time"] = dataPoint.time;
+            dataPointJson["gaze_velocity"] = dataPoint.gazeVel;
 
-        // Create a JSON array for objects and distances
-        nlohmann::json objectsJson = nlohmann::json::array();
-        uint maxSize = 2;
-        if (dataPoint.objectNames.size() < maxSize)
-            maxSize = dataPoint.objectNames.size();
-        for (size_t i = 0; i < maxSize; ++i) {
-            nlohmann::json objectJson;
-            objectJson["name"] = dataPoint.objectNames[i];
-            objectJson["angleDiff"] = dataPoint.angleDiffs[i];
-            objectJson["distance"] = dataPoint.distances[i];
-            objectJson["angleDiffXY"] = dataPoint.angleDiffsXY[i];
-            objectJson["angleDiffXZ"] = dataPoint.angleDiffsXZ[i];
-            objectsJson.push_back(objectJson);
+            // Create a JSON array for objects and distances
+            nlohmann::json objectsJson = nlohmann::json::array();
+            for (size_t i = 0; i < dataPoint.objectNames.size(); ++i) {
+                nlohmann::json objectJson;
+                objectJson["name"] = dataPoint.objectNames[i];
+                objectJson["angle_diff"] = dataPoint.angleDiffs[i];
+                objectJson["distance"] = dataPoint.distances[i];
+                objectJson["angle_diffXY"] = dataPoint.angleDiffsXY[i];
+                objectJson["angle_diffXZ"] = dataPoint.angleDiffsXZ[i];
+                objectsJson.push_back(objectJson);
+            }
+            dataPointJson["objects"] = objectsJson;
+            dataJson.push_back(dataPointJson);
         }
-        dataJson["objects"] = objectsJson;
-
-        // Add the current data point to the JSON array
-        gazeDataJson.push_back(dataJson);
+        userGazeDataJson["gaze_data"] = dataJson;
+        gazeDataJson.push_back(userGazeDataJson);
     }
+
+    // const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
+    // // Iterate over the gazeData deque
+    // for (const auto& dataPoint : *gazeData) 
+    // {
+    //     nlohmann::json dataJson;
+    //     dataJson["agent_name"] = dataPoint.agentName;
+    //     dataJson["time"] = dataPoint.time;
+    //     dataJson["gaze_velocity"] = dataPoint.gazeVel;
+
+    //     // Create a JSON array for objects and distances
+    //     nlohmann::json objectsJson = nlohmann::json::array();
+    //     uint maxSize = 2;
+    //     if (dataPoint.objectNames.size() < maxSize)
+    //         maxSize = dataPoint.objectNames.size();
+    //     for (size_t i = 0; i < maxSize; ++i) {
+    //         nlohmann::json objectJson;
+    //         objectJson["name"] = dataPoint.objectNames[i];
+    //         objectJson["angleDiff"] = dataPoint.angleDiffs[i];
+    //         objectJson["distance"] = dataPoint.distances[i];
+    //         objectJson["angleDiffXY"] = dataPoint.angleDiffsXY[i];
+    //         objectJson["angleDiffXZ"] = dataPoint.angleDiffsXZ[i];
+    //         objectsJson.push_back(objectJson);
+    //     }
+    //     dataJson["objects"] = objectsJson;
+
+    //     // Add the current data point to the JSON array
+    //     gazeDataJson.push_back(dataJson);
+    // }
 
     return gazeDataJson;  // Return the JSON array of all gaze data points
 }

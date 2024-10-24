@@ -51,7 +51,7 @@ namespace aff
 
 struct GazeDataPoint {
     double time;  // Time in seconds
-    std::string agentName; // Name of the agent
+    // std::string agentName; // Name of the agent
     std::vector<std::string> objectNames;  // Names of the objects
     std::vector<double> angleDiffs;  // Angle differences to objects in deg
     std::vector<double> distances;   // Distance to each object
@@ -59,9 +59,9 @@ struct GazeDataPoint {
     std::vector<double> angleDiffsXZ;  // Gaze angles in YZ plane
     double gazeVel; // Gaze velocity in deg/s
 
-    GazeDataPoint(double t, std::string agentName_, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_,
+    GazeDataPoint(double t, const std::vector<std::string>& names, const std::vector<double>& angleDiffs_,
      const std::vector<double>& distances_, double vel, const std::vector<double>& angleDiffsXY_, const std::vector<double>& angleDiffsXZ_)
-        : time(t), agentName(agentName_), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel),
+        : time(t), objectNames(names), angleDiffs(angleDiffs_),distances(distances_), gazeVel(vel),
           angleDiffsXY(angleDiffsXY_), angleDiffsXZ(angleDiffsXZ_) {}
 };
 
@@ -74,7 +74,7 @@ public:
    *
    * \param[in] parent    Entity class responsible for event subscriptions
    */
-  GazeComponent(EntityBase* parent, const std::string& gazingBody,
+  GazeComponent(EntityBase* parent, const std::string& agentName, const std::string& gazingBody,
                 int dirIdx = 1, double maxDurationGazeData=20, bool saveData=false, double maxGazeAngleDiff=DEFAULT_MAX_GAZE_ANGLE_DIFF);
 
   /*! \brief Unsubscribes and deletes all previously allocated memory.

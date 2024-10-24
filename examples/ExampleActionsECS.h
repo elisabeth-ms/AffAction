@@ -219,9 +219,9 @@ protected:
 
   RcsGraph* graphToInitializeWith;
   
-  //---------------------------- Gaze component ------------------------------------------------ //
+  //---------------------------- Gaze components ------------------------------------------------ //
 
-  GazeComponent * gazeC;
+  std::vector<GazeComponent*> gazeComponents; // List of gaze components
 
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 

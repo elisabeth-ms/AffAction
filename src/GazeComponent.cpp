@@ -53,8 +53,8 @@ that it should attend to. The gaze direction is the head's y-axis.
 namespace aff
 {
 
-GazeComponent::GazeComponent(EntityBase* parent, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_, double maxGazeAngleDiff_) :
-  ComponentBase(parent), gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), 
+GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_, double maxGazeAngleDiff_) :
+  ComponentBase(parent), agentName(agentName_),gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), 
   saveData(saveData_), maxGazeAngleDiff(maxGazeAngleDiff_)
 {
   prevHeadDirection[0] = 0;
@@ -62,7 +62,6 @@ GazeComponent::GazeComponent(EntityBase* parent, const std::string& gazingBody_,
   prevHeadDirection[2] = 0;
 
   subscribe("PostUpdateGraph", &GazeComponent::onPostUpdateGraph);
-
 
 }
 
@@ -115,16 +114,16 @@ void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* g
 
   }
 
-  std::vector<const aff::Agent*> agents = scene.getAgents<aff::Agent>();
-  for (const auto& agent : agents)
-  {
-    if (gazingBody.find(agent->name) != std::string::npos)
-    {
-        RLOG(0, "Agent '%s' is in gazingBody: %s", agent->name.c_str(), gazingBody.c_str());
-        agentName = agent->name;
-        break;
-    }
-  }
+  // std::vector<const aff::Agent*> agents = scene.getAgents<aff::Agent>();
+  // for (const auto& agent : agents)
+  // {
+  //   if (gazingBody.find(agent->name) != std::string::npos)
+  //   {
+  //       RLOG(0, "Agent '%s' is in gazingBody: %s", agent->name.c_str(), gazingBody.c_str());
+  //       agentName = agent->name;
+  //       break;
+  //   }
+  // }
 
 }
 
@@ -310,9 +309,9 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
       t_calc = Timer_getSystemTime() - t_calc;
 
-      if(saveData){
-          writeSortedData(Timer_getSystemTime(), objectsToAttend, gazeVel);
-      }
+      // if(saveData){
+      //     writeSortedData(Timer_getSystemTime(), objectsToAttend, gazeVel);
+      // }
       RLOG(1, "Took %.3f usec, gazeVel is %.3f", 1000.0 * t_calc, gazeVel);
       RLOG(1, "Omega vector: (%.3f, %.3f, %.3f)", head->omega[0], head->omega[1], head->omega[2]);
       RLOG(1, "Number of gazeData elements stored: %ld with a total duration: %.3f", gazeData.size(), totalDurationGazeData);
@@ -356,7 +355,7 @@ void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>
       }
 
       // Add the new gaze data
-      gazeData.emplace_back(time, agentName, objectNames, angleDiffs, distances, gazeVel, angleDiffsXY, angleDiffsXZ);
+      gazeData.emplace_back(time, objectNames, angleDiffs, distances, gazeVel, angleDiffsXY, angleDiffsXZ);
 
       // Remove oldest data points if total duration exceeds the maxDurationGazeData
       while (totalDurationGazeData > maxDurationGazeData && !gazeData.empty()) {
