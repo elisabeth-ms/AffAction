@@ -171,7 +171,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   // attend that are just in the way
   double gazeVel = Vec3d_getLength(head->omega);
 
-  bool useAABBPoints = false;
+  bool useClosestPointAABB = true;
   
   if(Vec3d_getLength(prevHeadDirection)!=0)
   {
@@ -197,40 +197,24 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
     double xyzMin[3], xyzMax[3], centroid[3];
     bool aabbValid = RcsGraph_computeBodyAABB(graph, obj->id, -1, xyzMin, xyzMax, NULL);
-    
 
     if (aabbValid)
     {
 
-      if(useAABBPoints)
+      if(useClosestPointAABB)
       {
-        std::vector<std::array<double,3>> pointsObject;
-        // Get  points for each aabb
-        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.025);
-        
-        for(const auto& point: pointsObject)
-        {
-          double p[3];
-          Vec3d_set(p, point[0], point[1], point[2]);
-          // RLOG(1, "Point: (%f, %f, %f)", p[0], p[1],p[2]);
-          Vec3d_sub(eye_obj, p, eyePos);
-
+          double closestPoint[3];
+          getClosestOrIntersectedPoint(eyePos, gazeDir, xyzMin, xyzMax, closestPoint);
+          Vec3d_sub(eye_obj, closestPoint, eyePos);
           double eye_objXY[3];
           Vec3d_set(eye_objXY, eye_obj[0], eye_obj[1], 0);
           double eye_objXZ[3];
           Vec3d_set(eye_objXZ, eye_obj[0], 0, eye_obj[2]);
-
-          double angle = Vec3d_diffAngle(eye_obj, gazeDir);
-          double angleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
-          double angleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
-          // RLOG(1, "Angle %f", angle*180.0/M_PI);
-          if(angle<o.gazeAngle){
-            o.gazeAngle = angle;
-            o.objectPointDistance = Vec3d_distance(p, eyePos);
-            o.gazeAngleXY = angleXY;
-            o.gazeAngleXZ = angleXZ;
-          }
-        }
+          o.objectPointDistance = Vec3d_distance(closestPoint, eyePos);
+          o.gazeAngle = Vec3d_diffAngle(eye_obj, gazeDir);
+          o.gazeAngleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
+          o.gazeAngleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
+        
       }
       else
       {   
@@ -318,6 +302,57 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
       RLOG(1, "Oldest object in deque: %s Newest object in deque: %s", gazeData.front().objectNames[0].c_str(), gazeData.back().objectNames[0].c_str());
       
   }
+}
+
+bool GazeComponent::getClosestOrIntersectedPoint(const double* rayOrigin, const double* rayDirection, const double* min, const double* max, double* closestPoint)         
+{
+    double tMin = std::numeric_limits<double>::lowest();
+    double tMax = std::numeric_limits<double>::max();
+
+    for (int i = 0; i < 3; ++i) {
+        if (std::abs(rayDirection[i]) > 1e-6) {  // Avoid division by zero
+            double t1 = (min[i] - rayOrigin[i]) / rayDirection[i];
+            double t2 = (max[i] - rayOrigin[i]) / rayDirection[i];
+
+            if (t1 > t2) std::swap(t1, t2);  // Ensure t1 is entry, t2 is exit for this axis
+
+            tMin = std::max(tMin, t1);  // Largest entry point
+            tMax = std::min(tMax, t2);  // Smallest exit point
+        } else {
+            // Ray is parallel to this axis, check if origin is outside the slab
+            if (rayOrigin[i] < min[i] || rayOrigin[i] > max[i]) {
+                // No intersection
+                break;
+            }
+        }
+    }
+
+    // Check for a valid intersection
+    if (tMin <= tMax && tMax > 0) {
+        // Intersection occurs at tMin
+        for (int i = 0; i < 3; ++i) {
+            closestPoint[i] = rayOrigin[i] + tMin * rayDirection[i];
+        }
+        return true;  // Intersection found
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        if (rayOrigin[i] < min[i]) {
+            // Ray origin is outside the box, clamp to min face
+            closestPoint[i] = min[i];
+        } else if (rayOrigin[i] > max[i]) {
+            // Ray origin is outside the box, clamp to max face
+            closestPoint[i] = max[i];
+        } else {
+            // Ray origin is between min and max, clamp to current point along ray
+            closestPoint[i] = rayOrigin[i];
+        }
+    }
+    return false;  // No intersection
+}
+
+double GazeComponent::clamp(double value, double min, double max) {
+        return (value < min) ? min : (value > max) ? max : value;
 }
 
 void GazeComponent::writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel)

@@ -45,6 +45,7 @@
 
 #define DEFAULT_MAX_GAZE_ANGLE_DIFF 50.0
 
+
 namespace aff
 {
 
@@ -130,8 +131,11 @@ private:
 
   std::vector<BodyIntersection> objectsToAttend;
   std::ofstream file;  // File stream object
-
   
+  static double clamp(double value, double min, double max);
+
+  bool getClosestOrIntersectedPoint(const double* rayOrigin, const double* rayDirection, const double* min, const double* max, double* closestPoint);         
+
   
   void writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel);
 
