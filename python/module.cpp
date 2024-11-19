@@ -510,10 +510,6 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getGazeData();
   })
 
-  .def("save_gaze_data_to_file", [](aff::ExampleActionsECS& ex, std::string directory, std::string filename)
-  {
-    ex.getQuery()->saveGazeDataToFile(directory,filename);
-  })
 
   //---------------------------- SkeletonDataRecorder component ---------------------------------------------//
 
@@ -1106,7 +1102,6 @@ PYBIND11_MODULE(pyAffaction, m)
   .def_readwrite("maxNumThreads", &aff::ExampleActionsECS::maxNumThreads)
   
   // ----------------- Gaze component ---------------------------------------------- //
-  .def_readwrite("saveGazeData", &aff::ExampleActionsECS::saveGazeData)
   .def_readwrite("maxGazeAngleDiff", &aff::ExampleActionsECS::maxGazeAngleDiff)
   .def_readwrite("recordTransformations", &aff::ExampleActionsECS::recordTransformations)
   .def_readwrite("playTransformations", &aff::ExampleActionsECS::playTransformations)

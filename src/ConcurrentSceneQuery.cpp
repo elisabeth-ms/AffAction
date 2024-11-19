@@ -494,13 +494,6 @@ nlohmann::json ConcurrentSceneQuery::getGazeData()
   return gazeData;
 }
 
-void ConcurrentSceneQuery::saveGazeDataToFile(const std::string& directory, const std::string& filename)
-{
-  sim->lockStepMtx();
-  sim->saveGazeDataToFile(directory,filename);
-  sim->unlockStepMtx();
-}
-
 nlohmann::json ConcurrentSceneQuery::getRecordedTransformations(double start_time, double end_time)
 {
   sim->lockStepMtx();

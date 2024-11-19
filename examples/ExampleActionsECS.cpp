@@ -305,7 +305,6 @@ bool ExampleActionsECS::initParameters()
   xmlFileName = "g_group_6.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
   // gazeDataDirectory = "../../gazeData";
-  saveGazeData = false;
   speedUp = 3;
   recordTransformations = false;
   maxGazeAngleDiff = DEFAULT_MAX_GAZE_ANGLE_DIFF;
@@ -350,7 +349,6 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-earlyExitAction", &earlyExitAction, "Early exit with action prediction's first error");
 
   // Save gaze data
-  parser->getArgument("-saveGazeData", &saveGazeData, "Enable saving of gaze data" "(default is %d)", saveGazeData);
   parser->getArgument("-maxGazeAngleDiff", &maxGazeAngleDiff, "Maximum gaze angle difference" "(default is %f)", maxGazeAngleDiff);
   parser->getArgument("-recordTransformations", &recordTransformations, "Enable recording of transformations" "(default is %d)", recordTransformations);
   parser->getArgument("-playTransformations", &playTransformations, "Enable playing of transformations" "(default is %d)", playTransformations);
@@ -591,20 +589,13 @@ bool ExampleActionsECS::initAlgo()
     if (agent->name != "Johnnie") // We exclude the robot called "Johnnie"
     {
       // Add the cool GazeComponent
-      GazeComponent* gazeC = new GazeComponent(&entity, agent->name, "Head_"+agent->name, 1, 10, saveGazeData, maxGazeAngleDiff);
+      GazeComponent* gazeC = new GazeComponent(&entity, agent->name, "Head_"+agent->name, 1, 10, maxGazeAngleDiff);
       gazeC->addSceneToAttend(*getScene(), getGraph());
       gazeComponents.push_back(gazeC);
       addComponent(gazeC);
     }
     
   }
-  // // Add the cool GazeComponent
-  // gazeC = new GazeComponent(&entity, "Head_Daniel", 1, 10, saveGazeData, maxGazeAngleDiff);
-  // gazeC->addSceneToAttend(*getScene(), getGraph());
-  // std::string agentName = gazeC->getAgentName();
-  // // if(saveGazeData)
-  // //     gazeC->openFile(gazeDataDirectory+"/"+agentName+"_"+gazeDataFileName);
-  // addComponent(gazeC);
 
   // Add the SceneTransformationDataRecorder
   if (recordTransformations)
@@ -650,12 +641,6 @@ bool ExampleActionsECS::initAlgo()
 }
 
 
-
-void ExampleActionsECS::saveGazeDataToFile(const std::string& directory, const std::string& filename) const
-{
-  // gazeC->saveInFile(directory+"/"+gazeC->getAgentName()+"_"+filename);
-  ;
-}
 
 void ExampleActionsECS::loadTransformationDataFromFile(const std::string& filename) const
 {

@@ -75,7 +75,7 @@ public:
    * \param[in] parent    Entity class responsible for event subscriptions
    */
   GazeComponent(EntityBase* parent, const std::string& agentName, const std::string& gazingBody,
-                int dirIdx = 1, double maxDurationGazeData=20, bool saveData=false, double maxGazeAngleDiff=DEFAULT_MAX_GAZE_ANGLE_DIFF);
+                int dirIdx = 1, double maxDurationGazeData=20, double maxGazeAngleDiff=DEFAULT_MAX_GAZE_ANGLE_DIFF);
 
   /*! \brief Unsubscribes and deletes all previously allocated memory.
    *         There is no thread that needs to be stopped.
@@ -105,7 +105,6 @@ private:
   std::string gazingBody;
   int id_gazeBody;
   int gazeDirectionIdx;   // 0: x, 1: y, 2: z
-  bool saveData;
   double prevHeadDirection[3];
   std::string agentName;
 

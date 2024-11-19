@@ -53,9 +53,8 @@ that it should attend to. The gaze direction is the head's y-axis.
 namespace aff
 {
 
-GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_, double maxGazeAngleDiff_) :
-  ComponentBase(parent), agentName(agentName_),gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), 
-  saveData(saveData_), maxGazeAngleDiff(maxGazeAngleDiff_)
+GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, double maxGazeAngleDiff_) :
+  ComponentBase(parent), agentName(agentName_),gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), maxGazeAngleDiff(maxGazeAngleDiff_)
 {
   prevHeadDirection[0] = 0;
   prevHeadDirection[1] = 0;
@@ -84,10 +83,16 @@ void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* g
     const RcsBody* bdy = RcsGraph_getBodyByName(graph, ntt->bdyName.c_str());
     RCHECK_MSG(bdy, "%s", ntt->bdyName.c_str());
 
-    if (ntt->bdyName == gazingBody)
+    if (ntt->bdyName == gazingBody || ntt->bdyName == agentName)
       {
 	continue;
       }
+    
+    if (ntt->bdyName.find("robot") != std::string::npos)
+    {
+      continue;
+    }
+    
 
     double xyzMin[3], xyzMax[3];
     bool aabbValid = RcsGraph_computeBodyAABB(graph, bdy->id, -1, xyzMin, xyzMax, NULL);
@@ -171,7 +176,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   // attend that are just in the way
   double gazeVel = Vec3d_getLength(head->omega);
 
-  bool useAABBPoints = false;
+  bool useAABBPoints = true;
   
   if(Vec3d_getLength(prevHeadDirection)!=0)
   {
@@ -198,15 +203,16 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
     double xyzMin[3], xyzMax[3], centroid[3];
     bool aabbValid = RcsGraph_computeBodyAABB(graph, obj->id, -1, xyzMin, xyzMax, NULL);
     
-
+    
     if (aabbValid)
     {
 
       if(useAABBPoints)
       {
+        RLOG(0, "Using AABB points for object %s", o.bdyName.c_str());
         std::vector<std::array<double,3>> pointsObject;
         // Get  points for each aabb
-        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.025);
+        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.02);
         
         for(const auto& point: pointsObject)
         {
@@ -231,6 +237,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
             o.gazeAngleXZ = angleXZ;
           }
         }
+        
       }
       else
       {   
@@ -309,9 +316,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
       t_calc = Timer_getSystemTime() - t_calc;
 
-      // if(saveData){
-      //     writeSortedData(Timer_getSystemTime(), objectsToAttend, gazeVel);
-      // }
+
       RLOG(1, "Took %.3f usec, gazeVel is %.3f", 1000.0 * t_calc, gazeVel);
       RLOG(1, "Omega vector: (%.3f, %.3f, %.3f)", head->omega[0], head->omega[1], head->omega[2]);
       RLOG(1, "Number of gazeData elements stored: %ld with a total duration: %.3f", gazeData.size(), totalDurationGazeData);
@@ -382,7 +387,7 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     double lengthY = xyzMax[1] - xyzMin[1];
     double lengthZ = xyzMax[2] - xyzMin[2];
 
-    RLOG(1, "LENGTHS: (%f, %f, %f)", lengthX, lengthY, lengthZ);
+    // RLOG(0, "LENGTHS: (%f, %f, %f)", lengthX, lengthY, lengthZ);
     int stepsX = static_cast<int>(lengthX / distance) + 1;
     int stepsY = static_cast<int>(lengthY / distance) + 1;
     int stepsZ = static_cast<int>(lengthZ / distance) + 1;
@@ -391,7 +396,7 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     double stepY = lengthY / (stepsY);
     double stepZ = lengthZ / (stepsZ);
 
-
+    
 
 
 
@@ -429,6 +434,7 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
             pointsObject.push_back(point);
         }
     }
+    // RLOG(0, "Number of points: %d", pointsObject.size());
 }
 
 
