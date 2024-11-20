@@ -209,7 +209,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
       if(useAABBPoints)
       {
-        RLOG(0, "Using AABB points for object %s", o.bdyName.c_str());
+        // RLOG(0, "Using AABB points for object %s", o.bdyName.c_str());
         std::vector<std::array<double,3>> pointsObject;
         // Get  points for each aabb
         getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.02);

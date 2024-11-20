@@ -60,35 +60,44 @@ namespace aff
         std::vector<const aff::Agent *> agents = scene.getAgents<aff::Agent>();
         for (const auto &agent : agents)
         {
-            RLOG_CPP(0, "Adding agent " << agent->name << " to SceneTransformationDataRecorder");
             const RcsBody *agentBody = RcsGraph_getBodyByName(graph, agent->bdyName.c_str());
-            if (agentBody)
-            {
+            if (agentBody && agent->bdyName != "Johnnie")
+            {   
+                RLOG(0, "Adding agent %s  to SceneTransformationDataRecorder", agent->name.c_str());
                 addBodyAndParents(agentBody, bodyParentMap, graph);
             }
             else
             {
-                RLOG_CPP(0, "Agent body not found: " << agent->name);
+                RLOG(0, "Agent body not found: %s", agent->name.c_str());
             }
         }
 
         // Add scene objects to record
         auto ntts = scene.getSceneEntities();
+        std::vector<std::string> excluded_list = {"_link", "_robot"};
         for (const auto &ntt : ntts)
         {
-            RLOG_CPP(0, "Adding object " << ntt->name << " to SceneTransformationDataRecorder");
+            RLOG(0, "Adding object %s to SceneTransformationDataRecorder", ntt->name.c_str());
             const RcsBody *objectBody = RcsGraph_getBodyByName(graph, ntt->bdyName.c_str());
-            if (objectBody)
+            bool exclude = false;
+            for (const auto& substring : excluded_list) {
+                if (ntt->name.find(substring) != std::string::npos) {
+                    RLOG(0, "Excluding object %s", ntt->name.c_str());
+                    exclude = true;
+                    break;
+                }
+            }
+            if (objectBody && !exclude)
             {
                 addBodyAndParents(objectBody, bodyParentMap, graph);
             }
             else
             {
-                RLOG_CPP(0, "Object body not found: " << ntt->name);
+                RLOG(0, "Object body not found: %s", ntt->name.c_str());
             }
         }
 
-        RLOG_CPP(0, "Total bodies and parent transformations recorded: " << bodyParentMap.size());
+        RLOG(0, "Total bodies and parent transformations recorded: %ld", bodyParentMap.size());
     }
 
     void SceneTransformationDataRecorder::onPostUpdateGraph(RcsGraph *desired, RcsGraph *current)
