@@ -18,7 +18,7 @@ SceneTransformationDataPlayer::SceneTransformationDataPlayer(EntityBase* parent)
 
 SceneTransformationDataPlayer::~SceneTransformationDataPlayer()
 {
-    RLOG(1, "SceneTransformationDataPlayer destroyed");
+    RLOG(1, "SceneTransformationDataPlayer destroyed");N
 }
 
 void SceneTransformationDataPlayer::getRobotBodies(RcsGraph* graph)
@@ -190,6 +190,7 @@ void SceneTransformationDataPlayer::updateGraph(RcsGraph* graph)
         RLOG(0, "Desired time between trasnformations: %f", desiredTimeBetweenTransformations);
     }
     double currentTime = Timer_getSystemTime();
+    
     // if (desiredTimeBetweenTransformations>0.0)
     // {
     //     double currentTimeDiff = currentTime-previousTime;
