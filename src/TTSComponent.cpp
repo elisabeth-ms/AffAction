@@ -47,6 +47,8 @@
 #endif
 
 static std::string piperPath = std::string(AFFACTION_PIPER_PATH);
+static std::string piperVoicesPath = std::string(VOICES_PIPER_PATH);
+
 #if defined (_MSC_VER)
 static std::string piperExe = std::string("\"") + piperPath + "/piper.exe" + std::string("\"");
 //static std::string piperExe = piperPath + "\\piper.exe";
@@ -157,6 +159,26 @@ void TTSComponent::setPiperVoice(const std::string& voice)
     onnxStr = "en_US-kathleen-low.onnx\"";
     jsonStr = "en_en_US_kathleen_low_en_US-kathleen-low.onnx.json\"";
   }
+  else if(voice == "arctic"){
+    onnxStr = "en_US-arctic-medium.onnx\"";
+    jsonStr = "en_US-arctic-medium.onnx.json\"";
+  }
+  else if(voice == "ryan"){
+    onnxStr = "en_US-ryan-medium.onnx\"";
+    jsonStr = "en_US-ryan-medium.onnx.json\"";
+  }
+  else if(voice == "bryce"){
+    onnxStr = "en_US-bryce-medium.onnx\"";
+    jsonStr = "en_US-bryce-medium.onnx.json\"";
+  }
+  else if(voice == "norman"){
+    onnxStr = "en_US-norman-medium.onnx\"";
+    jsonStr = "en_US-norman-medium.onnx.json\"";
+  }
+  else if(voice == "john"){
+    onnxStr = "en_US-john-medium.onnx\"";
+    jsonStr = "en_US-john-medium.onnx.json\"";
+  }
   else
   {
     RMSG_CPP("Unsupported voice: '" << voice << "'");
@@ -265,8 +287,22 @@ void TTSComponent::localThread()
       // Piper command line:
       // echo "Hello, this is a test" | ./piper  -m en_US-joe-medium.onnx
       // -c en_en_US_john_medium_en_US-john-medium.onnx.json -f test1.wav; aplay test1.wav
-      std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
-      std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
+
+      // ------------------------- NEW VOICES PATH -------------------------------------------/
+      std::string onnxPath = std::string("\"") + piperVoicesPath + "/" + onnxStr;
+      std::string jsonPath = std::string("\"") + piperVoicesPath + "/" + jsonStr;
+      // ------------------------- NEW VOICES PATH -------------------------------------------/
+
+      
+      
+      // ------------------------- OLD VOICES PATH -------------------------------------------/
+      // std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
+      // std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
+      // ------------------------- OLD VOICES PATH -------------------------------------------/
+
+
+
+
       consCmd = "echo " + std::string("\"") + text + std::string("\" | ");
       consCmd += piperExe + " -m " + onnxPath + " -c " + jsonPath +
                  " -f piper.wav > piper.txt 2>&1; aplay piper.wav > aplay.txt 2>&1";

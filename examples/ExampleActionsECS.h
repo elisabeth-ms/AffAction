@@ -142,9 +142,7 @@ public:
 
 
 //---------------------------- Gaze component ------------------------------------------------ //
-  bool saveGazeData;
   nlohmann::json getGazeData() const;
-  void saveGazeDataToFile(const std::string& directory,const std::string& filename) const;
   double maxGazeAngleDiff;
 
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //

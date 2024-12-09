@@ -201,13 +201,14 @@ public:
 
   //---------------------------- Gaze component ------------------------------------------------ //
   nlohmann::json getGazeData();
-  void saveGazeDataToFile(const std::string& directory,const std::string& filename);
   //---------------------------- SkeletonDataRecorder component ------------------------------------------------ //
   nlohmann::json getRecordedTransformations(double start_time, double end_time);
 
   //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
   void loadTransformationDataFromFile(const std::string& filename);
   void startPlaybackTransformationData();
+  
+  nlohmann::json getPairwiseDistances();
 
 private:
 

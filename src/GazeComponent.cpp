@@ -53,9 +53,8 @@ that it should attend to. The gaze direction is the head's y-axis.
 namespace aff
 {
 
-GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, bool saveData_, double maxGazeAngleDiff_) :
-  ComponentBase(parent), agentName(agentName_),gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), 
-  saveData(saveData_), maxGazeAngleDiff(maxGazeAngleDiff_)
+GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, const std::string& gazingBody_, int dirIdx, double maxDurationGazeData_, double maxGazeAngleDiff_) :
+  ComponentBase(parent), agentName(agentName_),gazingBody(gazingBody_), id_gazeBody(-1), gazeDirectionIdx(dirIdx), maxDurationGazeData(maxDurationGazeData_), maxGazeAngleDiff(maxGazeAngleDiff_)
 {
   prevHeadDirection[0] = 0;
   prevHeadDirection[1] = 0;
@@ -84,10 +83,16 @@ void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* g
     const RcsBody* bdy = RcsGraph_getBodyByName(graph, ntt->bdyName.c_str());
     RCHECK_MSG(bdy, "%s", ntt->bdyName.c_str());
 
-    if (ntt->bdyName == gazingBody)
+    if (ntt->bdyName == gazingBody || ntt->bdyName == agentName)
       {
 	continue;
       }
+    
+    if (ntt->bdyName.find("robot") != std::string::npos)
+    {
+      continue;
+    }
+    
 
     double xyzMin[3], xyzMax[3];
     bool aabbValid = RcsGraph_computeBodyAABB(graph, bdy->id, -1, xyzMin, xyzMax, NULL);
@@ -171,7 +176,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   // attend that are just in the way
   double gazeVel = Vec3d_getLength(head->omega);
 
-  bool useClosestPointAABB = true;
+  bool useAABBPoints = true;
   
   if(Vec3d_getLength(prevHeadDirection)!=0)
   {
@@ -197,23 +202,41 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
     double xyzMin[3], xyzMax[3], centroid[3];
     bool aabbValid = RcsGraph_computeBodyAABB(graph, obj->id, -1, xyzMin, xyzMax, NULL);
-
+    
+    
     if (aabbValid)
     {
 
       if(useClosestPointAABB)
       {
-          double closestPoint[3];
-          getClosestOrIntersectedPoint(eyePos, gazeDir, xyzMin, xyzMax, closestPoint);
-          Vec3d_sub(eye_obj, closestPoint, eyePos);
+        // RLOG(0, "Using AABB points for object %s", o.bdyName.c_str());
+        std::vector<std::array<double,3>> pointsObject;
+        // Get  points for each aabb
+        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.015);
+        
+        for(const auto& point: pointsObject)
+        {
+          double p[3];
+          Vec3d_set(p, point[0], point[1], point[2]);
+          // RLOG(1, "Point: (%f, %f, %f)", p[0], p[1],p[2]);
+          Vec3d_sub(eye_obj, p, eyePos);
+
           double eye_objXY[3];
           Vec3d_set(eye_objXY, eye_obj[0], eye_obj[1], 0);
           double eye_objXZ[3];
           Vec3d_set(eye_objXZ, eye_obj[0], 0, eye_obj[2]);
-          o.objectPointDistance = Vec3d_distance(closestPoint, eyePos);
-          o.gazeAngle = Vec3d_diffAngle(eye_obj, gazeDir);
-          o.gazeAngleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
-          o.gazeAngleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
+
+          double angle = Vec3d_diffAngle(eye_obj, gazeDir);
+          double angleXY = Vec3d_diffAngle(eye_objXY, gazeDirXY);
+          double angleXZ = Vec3d_diffAngle(eye_objXZ, gazeDirXZ);
+          // RLOG(1, "Angle %f", angle*180.0/M_PI);
+          if(angle<o.gazeAngle){
+            o.gazeAngle = angle;
+            o.objectPointDistance = Vec3d_distance(p, eyePos);
+            o.gazeAngleXY = angleXY;
+            o.gazeAngleXZ = angleXZ;
+          }
+        }
         
       }
       else
@@ -293,9 +316,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
 
       t_calc = Timer_getSystemTime() - t_calc;
 
-      // if(saveData){
-      //     writeSortedData(Timer_getSystemTime(), objectsToAttend, gazeVel);
-      // }
+
       RLOG(1, "Took %.3f usec, gazeVel is %.3f", 1000.0 * t_calc, gazeVel);
       RLOG(1, "Omega vector: (%.3f, %.3f, %.3f)", head->omega[0], head->omega[1], head->omega[2]);
       RLOG(1, "Number of gazeData elements stored: %ld with a total duration: %.3f", gazeData.size(), totalDurationGazeData);
@@ -304,80 +325,6 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   }
 }
 
-bool GazeComponent::getClosestOrIntersectedPoint(const double* rayOrigin, const double* rayDirection, const double* min, const double* max, double* closestPoint)         
-{
-    double tMin = std::numeric_limits<double>::lowest();
-    double tMax = std::numeric_limits<double>::max();
-
-    for (int i = 0; i < 3; ++i) {
-        if (std::abs(rayDirection[i]) > 1e-6) {  // Avoid division by zero
-            double t1 = (min[i] - rayOrigin[i]) / rayDirection[i];
-            double t2 = (max[i] - rayOrigin[i]) / rayDirection[i];
-
-            if (t1 > t2) std::swap(t1, t2);  // Ensure t1 is entry, t2 is exit for this axis
-
-            tMin = std::max(tMin, t1);  // Largest entry point
-            tMax = std::min(tMax, t2);  // Smallest exit point
-        } else {
-            // Ray is parallel to this axis, check if origin is outside the slab
-            if (rayOrigin[i] < min[i] || rayOrigin[i] > max[i]) {
-                // No intersection
-                break;
-            }
-        }
-    }
-
-    // Check for a valid intersection
-    if (tMin <= tMax && tMax > 0) {
-        // Intersection occurs at tMin
-        for (int i = 0; i < 3; ++i) {
-            closestPoint[i] = rayOrigin[i] + tMin * rayDirection[i];
-        }
-        return true;  // Intersection found
-    }
-
-    for (int i = 0; i < 3; ++i) {
-        if (rayOrigin[i] < min[i]) {
-            // Ray origin is outside the box, clamp to min face
-            closestPoint[i] = min[i];
-        } else if (rayOrigin[i] > max[i]) {
-            // Ray origin is outside the box, clamp to max face
-            closestPoint[i] = max[i];
-        } else {
-            // Ray origin is between min and max, clamp to current point along ray
-            closestPoint[i] = rayOrigin[i];
-        }
-    }
-    return false;  // No intersection
-}
-
-double GazeComponent::clamp(double value, double min, double max) {
-        return (value < min) ? min : (value > max) ? max : value;
-}
-
-void GazeComponent::writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel)
-{
-    if (!file.is_open()) return;
-
-    file << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << time;
-
-    file << "," <<(180.0 / M_PI)*gazeVel;
-
-    for (const auto& obj : objectsToAttend) {
-        file << "," << obj.name << "," << (180.0 / M_PI) * obj.gazeAngle;
-    }
-
-    file << "\n"; 
-}
-
-void GazeComponent::saveInFile(const std::string& filename)
-{
-
-    file.open(filename, std::ios::out);  // File in write mode
-    if (!file.is_open()) {
-       std::cerr << "Failed to open file: " << filename << std::endl;
-    }
-}
 
 
 void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& angleDiffs,
@@ -417,7 +364,7 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     double lengthY = xyzMax[1] - xyzMin[1];
     double lengthZ = xyzMax[2] - xyzMin[2];
 
-    RLOG(1, "LENGTHS: (%f, %f, %f)", lengthX, lengthY, lengthZ);
+    // RLOG(0, "LENGTHS: (%f, %f, %f)", lengthX, lengthY, lengthZ);
     int stepsX = static_cast<int>(lengthX / distance) + 1;
     int stepsY = static_cast<int>(lengthY / distance) + 1;
     int stepsZ = static_cast<int>(lengthZ / distance) + 1;
@@ -426,20 +373,23 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     double stepY = lengthY / (stepsY);
     double stepZ = lengthZ / (stepsZ);
 
-
-
+    
+    // Reserve memory for points
+    pointsObject.reserve(2 * (stepsX * stepsY + stepsY * stepsZ + stepsX * stepsZ));
 
 
     for (int i = 0; i < stepsX; ++i) {
+        double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsY; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMin[1] + j * stepY, xyzMax[2] };
+            std::array<double, 3> point = {x, xyzMin[1] + j * stepY, xyzMax[2] };
             pointsObject.push_back(point);
         }
     }
 
     for (int i = 0; i < stepsY; ++i) {
+        double y = xyzMin[1] + i * stepY;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0], xyzMin[1] + i * stepY, xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { xyzMin[0], y, xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
@@ -452,18 +402,21 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     }
 
     for (int i = 0; i < stepsX; ++i) {
+      double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMin[1], xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { x, xyzMin[1], xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
 
     for (int i = 0; i < stepsX; ++i) {
+        double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMax[1], xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { x, xyzMax[1], xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
+    // RLOG(0, "Number of points: %ld", pointsObject.size());
 }
 
 

@@ -359,6 +359,31 @@ ComponentBase* createComponent(EntityBase& entity,
     tts->setPiperVoice("kathleen");
     return tts;
   }
+  else if(componentName == "-piper_tts_arctic"){
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("arctic");
+    return tts;
+  }
+  else if(componentName == "-piper_tts_ryan"){
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("ryan");
+    return tts;
+  }
+  else if(componentName == "-piper_tts_bryce"){
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("bryce");
+    return tts;
+  }
+  else if(componentName == "-piper_tts_norman"){
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("norman");
+    return tts;
+  }
+  else if(componentName == "-piper_tts_john"){
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("john");
+    return tts;
+  }
   else if (componentName == "-websocket")
   {
     return new WebsocketActionComponent(&entity);

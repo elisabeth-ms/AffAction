@@ -33,7 +33,7 @@
     <Shape distance="false" graphics="true" length="0.17" physics="false" radius="0.0325" transform="0 0 0.085 0 0 0" type="CYLINDER"/>
     <Shape distance="false" graphics="true" length="0.08" physics="false" radius="0.0175" transform="0 0 0.21 0 0 0" type="CYLINDER"/>
 	<Shape color="RED" distance="true" graphics="false" length="0.185" physics="true" radius="0.0325" transform="0 0 0.035 0 0 0" type="SSL"/>
-    <Shape extents="0.04 0.04 0" marker="true" markerName="aruco_26" scale="0.1" transform="0.0325 0 0.12 90 90 0" type="FRAME"/>
+    <Shape extents="0.04 0.04 0" marker="true" markerName="aruco_14" scale="0.1" transform="0.0325 0 0.071 90 90 0" type="FRAME"/>
   </Body>
   
   <Body name="tip_bottle_of" prev="bottle_of" transform="0 0 0.26 0 0 0">
