@@ -33,7 +33,7 @@ namespace aff
             // Get the parent of the current body
             RcsBody *parent = RcsBody_getParent(const_cast<RcsGraph *>(graph), const_cast<RcsBody *>(body));
 
-            // If there is a parent, add the body and its parent to the map
+            //Add the body and its parent to the map
             if (parent)
             {
                 RLOG_CPP(0, "Added body: " << body->name << " with parent: " << parent->name);
@@ -74,6 +74,7 @@ namespace aff
 
         // Add scene objects to record
         auto ntts = scene.getSceneEntities();
+        // List of substrings to exclude from the recording
         std::vector<std::string> excluded_list = {"_link", "_robot"};
         for (const auto &ntt : ntts)
         {
@@ -102,8 +103,7 @@ namespace aff
 
     void SceneTransformationDataRecorder::onPostUpdateGraph(RcsGraph *desired, RcsGraph *current)
     {
-        // You can get skeleton data from the current RcsGraph or any other component
-        // Here you should extract skeleton data from the current graph and record it
+
 
         const RcsGraph *graph = desired;
 
@@ -112,7 +112,6 @@ namespace aff
         recordTransformationsAtTime(currentTime, graph);
 
         RLOG(1, "Recorded transformations at time: %f", currentTime);
-        // NUMBER OF RECORDED TRANSFORMATIONS
         RLOG(1, "Number of recorded transformations: %zu", recordedTransformations.size());
     }
 
