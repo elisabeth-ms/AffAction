@@ -503,8 +503,28 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getAgents();
   })
 
-  //---------------------------- Gaze component ---------------------------------------------//
-
+  //////////////////////////////////////////////////////////////////////////////
+  // Returns gaze data as a JSON object. If no gaze data is available, 
+  // it returns an empty JSON object. The JSON is structured as:
+  // {
+  //     "agent_name": "AgentName",
+  //     "gaze_data": [
+  //         {
+  //             "time": 123.45,
+  //             "gaze_velocity": 5.67,
+  //             "objects": [
+  //                 {
+  //                     "name": "ObjectName",
+  //                     "angle_diff": 12.34,
+  //                     "distance": 1.23,
+  //                     "angle_diffXY": 5.67,
+  //                     "angle_diffXZ": 8.90
+  //                 }
+  //             ]
+  //         }
+  //     ]
+  // }
+  //////////////////////////////////////////////////////////////////////////////
   .def("get_gaze_data", [](aff::ExampleActionsECS& ex) -> nlohmann::json
   {
     return ex.getQuery()->getGazeData();
