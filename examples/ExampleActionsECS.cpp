@@ -304,7 +304,6 @@ bool ExampleActionsECS::initParameters()
   // xmlFileName = "g_attentive_support.xml";
   xmlFileName = "g_group_6.xml";
   configDirectory = "config/xml/AffAction/xml/examples";
-  // gazeDataDirectory = "../../gazeData";
   speedUp = 3;
   recordTransformations = false;
   maxGazeAngleDiff = DEFAULT_MAX_GAZE_ANGLE_DIFF;
@@ -347,9 +346,7 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-turbo", &turbo, "Compute action duration to be as fast as possible");
   parser->getArgument("-maxNumThreads", &maxNumThreads, "Max. number of threads for planning");
   parser->getArgument("-earlyExitAction", &earlyExitAction, "Early exit with action prediction's first error");
-
-  // Save gaze data
-  parser->getArgument("-maxGazeAngleDiff", &maxGazeAngleDiff, "Maximum gaze angle difference" "(default is %f)", maxGazeAngleDiff);
+  parser->getArgument("-maxGazeAngleDiff", &maxGazeAngleDiff, "Maximum gaze angle difference" "(default is %f)", maxGazeAngleDiff); // Maximum gaze angle difference for the GazeComponent
   parser->getArgument("-recordTransformations", &recordTransformations, "Enable recording of transformations" "(default is %d)", recordTransformations);
   parser->getArgument("-playTransformations", &playTransformations, "Enable playing of transformations" "(default is %d)", playTransformations);
   // This is just for pupulating the parsed command line arguments for the help
@@ -579,19 +576,31 @@ bool ExampleActionsECS::initAlgo()
                                                     virtualCameraWidth, virtualCameraHeight);
   }
 
-
+  // Retrieve all agents from the scene
   std::vector<const Agent*> agents = getScene()->getAgents<Agent>();
-  RLOG(0, "Number of agents: %ld", agents.size());
 
+  // Iterate over all agents and add the GazeComponent to all agents except the robot called "Johnnie"
   for (const auto& agent : agents)
   {
-    RLOG(0, "Agent: %s", agent->name.c_str());
-    if (agent->name != "Johnnie") // We exclude the robot called "Johnnie"
+    if (agent->name != "Johnnie") 
     {
-      // Add the cool GazeComponent
+        // Create a new GazeComponent for the agent
+        // The GazeComponent tracks the agent's gazing objects using the following parameters:
+        // - parent: Reference to the entity managing events (here, 'entity')
+        // - agentName: Name of the agent
+        // - gazingBody: The part of the agent used for gaze tracking (e.g., "Head_Elisabeth")
+        // - dirIdx: Index indicating gaze direction (default: 1 for the y-axis)
+        // - maxDurationGazeData: Maximum duration (in seconds) to retain gaze data
+        // - maxGazeAngleDiff: Threshold for the maximum gaze angle difference (degrees)
       GazeComponent* gazeC = new GazeComponent(&entity, agent->name, "Head_"+agent->name, 1, 10, maxGazeAngleDiff);
+
+      // Add current scene and graph to the GazeComponent
       gazeC->addSceneToAttend(*getScene(), getGraph());
+
+      // Store the GazeComponent in the list of components
       gazeComponents.push_back(gazeC);
+
+      // Add the GazeComponent to the entity
       addComponent(gazeC);
     }
     
@@ -1903,71 +1912,43 @@ std::string ExampleActionsECS::getComponentArguments() const
 }
 
 
-//---------------------------- Gaze component ------------------------------------------------ //
 nlohmann::json ExampleActionsECS::getGazeData() const
 {
     nlohmann::json gazeDataJson = nlohmann::json::array();  // Create an empty JSON array
-    // We need to loop all gaze components
+    // Loop through all gaze components
     for (const auto gazeC: gazeComponents){
         nlohmann::json userGazeDataJson;
-        userGazeDataJson["agent_name"] = gazeC->getAgentName();
+        userGazeDataJson["agent_name"] = gazeC->getAgentName(); // Add the agent name to the JSON 
  
         const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
-        // Iterate over the gazeData deque
+        // Create a JSON array for gaze data points of the current user
         nlohmann::json dataJson = nlohmann::json::array();
+
+        // Iteterate over the gaze data deque
         for(const auto& dataPoint : *gazeData){
             nlohmann::json dataPointJson;
-            dataPointJson["time"] = dataPoint.time;
-            dataPointJson["gaze_velocity"] = dataPoint.gazeVel;
+            dataPointJson["time"] = dataPoint.time; // Add the time of the data point to the JSON 
+            dataPointJson["gaze_velocity"] = dataPoint.gazeVel; // Add the head velocity to the JSON 
 
-            // Create a JSON array for objects and distances
+            // Create a JSON array for objects and their associated data
             nlohmann::json objectsJson = nlohmann::json::array();
             for (size_t i = 0; i < dataPoint.objectNames.size(); ++i) {
                 nlohmann::json objectJson;
-                objectJson["name"] = dataPoint.objectNames[i];
-                objectJson["angle_diff"] = dataPoint.angleDiffs[i];
-                objectJson["distance"] = dataPoint.distances[i];
-                objectJson["angle_diffXY"] = dataPoint.angleDiffsXY[i];
-                objectJson["angle_diffXZ"] = dataPoint.angleDiffsXZ[i];
+                objectJson["name"] = dataPoint.objectNames[i]; // Object name
+                objectJson["angle_diff"] = dataPoint.angleDiffs[i]; // Angular difference
+                objectJson["distance"] = dataPoint.distances[i]; // Distance to the object
+                objectJson["angle_diffXY"] = dataPoint.angleDiffsXY[i]; // Angular difference in XY plane
+                objectJson["angle_diffXZ"] = dataPoint.angleDiffsXZ[i]; // Angular difference in XZ plane
                 objectsJson.push_back(objectJson);
             }
-            dataPointJson["objects"] = objectsJson;
-            dataJson.push_back(dataPointJson);
+            dataPointJson["objects"] = objectsJson; // Add the objects array to the data point JSON
+            dataJson.push_back(dataPointJson); // Add the data point JSON to the array
         }
-        userGazeDataJson["gaze_data"] = dataJson;
-        gazeDataJson.push_back(userGazeDataJson);
+        userGazeDataJson["gaze_data"] = dataJson; // Add the data array to the user JSON
+        gazeDataJson.push_back(userGazeDataJson); // Add user JSON to the main JSON array
     }
 
-    // const std::deque<GazeDataPoint>* gazeData = gazeC->getGazeData();
-    // // Iterate over the gazeData deque
-    // for (const auto& dataPoint : *gazeData) 
-    // {
-    //     nlohmann::json dataJson;
-    //     dataJson["agent_name"] = dataPoint.agentName;
-    //     dataJson["time"] = dataPoint.time;
-    //     dataJson["gaze_velocity"] = dataPoint.gazeVel;
-
-    //     // Create a JSON array for objects and distances
-    //     nlohmann::json objectsJson = nlohmann::json::array();
-    //     uint maxSize = 2;
-    //     if (dataPoint.objectNames.size() < maxSize)
-    //         maxSize = dataPoint.objectNames.size();
-    //     for (size_t i = 0; i < maxSize; ++i) {
-    //         nlohmann::json objectJson;
-    //         objectJson["name"] = dataPoint.objectNames[i];
-    //         objectJson["angleDiff"] = dataPoint.angleDiffs[i];
-    //         objectJson["distance"] = dataPoint.distances[i];
-    //         objectJson["angleDiffXY"] = dataPoint.angleDiffsXY[i];
-    //         objectJson["angleDiffXZ"] = dataPoint.angleDiffsXZ[i];
-    //         objectsJson.push_back(objectJson);
-    //     }
-    //     dataJson["objects"] = objectsJson;
-
-    //     // Add the current data point to the JSON array
-    //     gazeDataJson.push_back(dataJson);
-    // }
-
-    return gazeDataJson;  // Return the JSON array of all gaze data points
+    return gazeDataJson;  // Return the JSON array of all gaze data points for all users
 }
 
 //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
