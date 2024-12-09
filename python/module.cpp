@@ -934,7 +934,7 @@ PYBIND11_MODULE(pyAffaction, m)
     ex.addComponent(lmc);   // Takes care of deletion
     lmc->setScenePtr(ex.getGraph(), ex.getScene());
 
-    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera");
+    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera_0");
     RCHECK(cam);
     lmc->addArucoTracker(cam->name, "aruco_base");
 

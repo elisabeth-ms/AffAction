@@ -66,11 +66,7 @@ GazeComponent::GazeComponent(EntityBase* parent, const std::string& agentName_, 
 
 GazeComponent::~GazeComponent()
 {
-    if (file.is_open())
-    {
-        file.close();
-        RLOG(1, "File close");
-    }
+
 }
 
 void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* graph)
@@ -166,7 +162,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   // attend that are just in the way
   double gazeVel = Vec3d_getLength(head->omega);
 
-  bool useAABBPoints = true;
+  bool useClosestPointAABB = true;
   
   if(Vec3d_getLength(prevHeadDirection)!=0)
   {
