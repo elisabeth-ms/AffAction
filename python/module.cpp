@@ -914,7 +914,7 @@ PYBIND11_MODULE(pyAffaction, m)
     ex.addComponent(lmc);   // Takes care of deletion
     lmc->setScenePtr(ex.getGraph(), ex.getScene());
 
-    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera_0");
+    const RcsBody* cam = RcsGraph_getBodyByName(ex.getGraph(), "camera");
     RCHECK(cam);
     lmc->addArucoTracker(cam->name, "aruco_base");
 
@@ -929,8 +929,6 @@ PYBIND11_MODULE(pyAffaction, m)
 
     return true;
   })
-
-
 
   //////////////////////////////////////////////////////////////////////////////
   // Adds a component to connect to the PTU action server ROS node, and to being
@@ -996,46 +994,7 @@ PYBIND11_MODULE(pyAffaction, m)
       ex.addComponent(c);
       return c ? true : false;
     }
-    else if(type == "piper_arctic")
-    {
-      auto c = createComponent(ex.getEntity(), ex.getGraph(),
-                               ex.getScene(), "-piper_tts_arctic");
-      ex.addComponent(c);
-      return c ? true : false;
 
-    }
-    else if(type == "piper_ryan")
-    {
-      auto c = createComponent(ex.getEntity(), ex.getGraph(),
-                               ex.getScene(), "-piper_tts_ryan");
-      ex.addComponent(c);
-      return c ? true : false;
-
-    }
-    else if(type == "piper_bryce")
-    {
-      auto c = createComponent(ex.getEntity(), ex.getGraph(),
-                               ex.getScene(), "-piper_tts_bryce");
-      ex.addComponent(c);
-      return c ? true : false;
-
-    }
-    else if(type == "piper_norman")
-    {
-      auto c = createComponent(ex.getEntity(), ex.getGraph(),
-                               ex.getScene(), "-piper_tts_norman");
-
-      ex.addComponent(c);
-      return c ? true : false;
-
-    }
-    else if(type == "piper_john")
-    {
-      auto c = createComponent(ex.getEntity(), ex.getGraph(),
-                               ex.getScene(), "-piper_tts_john");
-      ex.addComponent(c);
-      return c ? true : false;
-    }
     return false;
   })
 
@@ -1078,8 +1037,6 @@ PYBIND11_MODULE(pyAffaction, m)
   .def("step", &aff::ExampleActionsECS::step)
   .def("stop", &aff::ExampleActionsECS::stop)
   .def("isRunning", &aff::ExampleActionsECS::isRunning)
-
-
 
   //////////////////////////////////////////////////////////////////////////////
   // Scales the durations of actions (global scope)
@@ -1267,7 +1224,11 @@ PYBIND11_MODULE(pyAffaction, m)
     }
 
     return data;
-  });
+  })
+  ;
+
+
+
 
 
 
