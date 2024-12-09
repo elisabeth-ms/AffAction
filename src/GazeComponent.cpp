@@ -119,16 +119,6 @@ void GazeComponent::addSceneToAttend(const ActionScene& scene, const RcsGraph* g
 
   }
 
-  // std::vector<const aff::Agent*> agents = scene.getAgents<aff::Agent>();
-  // for (const auto& agent : agents)
-  // {
-  //   if (gazingBody.find(agent->name) != std::string::npos)
-  //   {
-  //       RLOG(0, "Agent '%s' is in gazingBody: %s", agent->name.c_str(), gazingBody.c_str());
-  //       agentName = agent->name;
-  //       break;
-  //   }
-  // }
 
 }
 

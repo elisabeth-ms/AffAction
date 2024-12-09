@@ -60,7 +60,6 @@
 
 #include <atomic>
 
-//---------------------------- Gaze component ------------------------------------------------ //
 #include "GazeComponent.h"
 //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 #include "SceneTransformationDataRecorder.h"
@@ -140,10 +139,12 @@ public:
 
   std::unique_ptr<GraphicsWindow> viewer;
 
-
-//---------------------------- Gaze component ------------------------------------------------ //
+  /*! \brief Retrieves the gaze data in JSON format.
+  * This methods aggregates the gaze data from all gaze components and returns it in JSON format.
+  * \return JSON object containing the gaze data from all the agents.
+  */
   nlohmann::json getGazeData() const;
-  double maxGazeAngleDiff;
+  double maxGazeAngleDiff; // Maximum gaze angle difference (deg) for the GazeComponent
 
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
   nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
@@ -217,9 +218,13 @@ protected:
 
   RcsGraph* graphToInitializeWith;
   
-  //---------------------------- Gaze components ------------------------------------------------ //
-
-  std::vector<GazeComponent*> gazeComponents; // List of gaze components
+  /*! \brief List of gaze components.
+  * 
+  * This vector contains pointers to instances of GazeComponent,
+  * each of which is responsible for tracking the gaze of a specific agent.
+  * 
+  */
+  std::vector<GazeComponent*> gazeComponents; 
 
   //---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
 
