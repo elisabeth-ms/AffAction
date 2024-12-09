@@ -509,7 +509,12 @@ PYBIND11_MODULE(pyAffaction, m)
   {
     return ex.getQuery()->getGazeData();
   })
-
+  
+  // ---------------------------- Distances between objects ---------------------------------------------//
+  .def("get_pairwise_distances", [](aff::ExampleActionsECS& ex) -> nlohmann::json
+  {
+    return ex.getQuery()->getPairwiseDistances();
+  })
 
   //---------------------------- SkeletonDataRecorder component ---------------------------------------------//
 
@@ -991,7 +996,46 @@ PYBIND11_MODULE(pyAffaction, m)
       ex.addComponent(c);
       return c ? true : false;
     }
+    else if(type == "piper_arctic")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_arctic");
+      ex.addComponent(c);
+      return c ? true : false;
 
+    }
+    else if(type == "piper_ryan")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_ryan");
+      ex.addComponent(c);
+      return c ? true : false;
+
+    }
+    else if(type == "piper_bryce")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_bryce");
+      ex.addComponent(c);
+      return c ? true : false;
+
+    }
+    else if(type == "piper_norman")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_norman");
+
+      ex.addComponent(c);
+      return c ? true : false;
+
+    }
+    else if(type == "piper_john")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_john");
+      ex.addComponent(c);
+      return c ? true : false;
+    }
     return false;
   })
 

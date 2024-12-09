@@ -41,15 +41,15 @@
 
   <!-- The Aruco markers are 1cm away from the borders of the table. -->
   <Body color="PEWTER" name="aruco_base" rigid_body_joints="true">
-    <Shape type="FRAME" extents="0.14 0.14 0"      marker="true"    markerName="aruco_1" scale="0.2" transform="0.16 0.61 0.81 0 0 0" />
-    <Shape type="BOX"   extents="0.14 0.14 0.0005" distance="false" physics="false" graphics="true"  transform="0.16 0.61 0.81 0 0 0" textureFile="textures/4x4marker_1.jpg" />
+    <Shape type="FRAME" extents="0.14 0.14 0"      marker="true"    markerName="aruco_1" scale="0.2" transform="0.16 0.61 0.70025 0 0 0" />
+    <Shape type="BOX"   extents="0.14 0.14 0.0005" distance="false" physics="false" graphics="true"  transform="0.16 0.61 0.70025 0 0 0" textureFile="textures/4x4marker_1.jpg" />
     <Shape type="BOX"   extents="3.0 4.0 0.04"     distance="false" physics="true"  graphics="true"  transform="0 0 -0.02 0 0 0"         color="PEWTER" no_textureFile="textures/floor.jpg" />
     <Shape scale="0.5" type="FRAME"/>
   </Body>
 
   <!-- The model for a simple camera. -->
   <Body color="LIGHTGRAY" name="camera_0" prev="aruco_base" rigid_body_joints="-0.924 0.530 1.473  166.341 48.556 107.392" >
-    <Shape distance="true" extents="0.3 0.2 0.02" graphics="true" physics="true" transform="0 0 0 0 0 0" type="BOX"/>
+    <Shape distance="true" extents="0.1 0.05 0.02" graphics="true" physics="true" transform="0 0 0 0 0 0" type="BOX"/>
     <Shape distance="false" extents="0.03 0.01 0.015" graphics="true" physics="false" transform="0 -0.03 0 0 0 0" type="BOX"/>
     <Shape distance="false" graphics="true" length="0.01" physics="false" radius="0.02" transform="0 0 0.015 0 0 0" type="CYLINDER"/>
     <Shape graphics="true" scale="0.2" type="FRAME"/>
@@ -60,7 +60,7 @@
 
   <!-- The model of the robot. -->
   <!--Group prev="aruco_base" transform="-0.8 0.0 0 0 0 0"-->
-  <Group prev="aruco_base" transform="-0.8 0.0 0 0 0 0">
+  <Group prev="aruco_base" transform="-0.8 0.3 0 0 0 0">
     <xi:include href="../TwoArmJaco7/g_robo.xml" />
   </Group>
 
@@ -70,40 +70,20 @@
   </Group-->
 
   <!--Group prev="aruco_base" name="Daniel" color="ORANGE" transform="0.7 0 0.5 0 0 0"-->
-  <Group prev="aruco_base" name="Elisabeth" color="ORANGE" transform="0.7 0.0 0.5 0 0 0" >
+  <Group prev="aruco_base" name="Daniel" color="ORANGE" transform="0.7 0.3 0.5 0 0 0" >
     <xi:include href="g_human_agent.xml"/>
   </Group>
 
   <!--  Table and objects -->
-  <Group prev="aruco_base" color="GRAY" rigid_body_joints="-0.15 0 0.81 0 0 0" >
+  <Group prev="aruco_base" color="GRAY" rigid_body_joints="-0.15 0 0.7 0 0 0" >
     <xi:include href="g_table.xml"/>
   </Group>
 
-  <Group prev="table_grid_0_7" name="_cola" color="BLACK_RUBBER" rigid_body_joints="0 0 0 0 0 0" >
+  <Group prev="table_grid_1_4" name="_cola" color="BLACK_RUBBER" rigid_body_joints="0 0 0 0 0 0" >
     <xi:include href="../scene/g_bottle_rewe.xml"/>
   </Group>
 
-    <Group prev="table_grid_1_3" name="_cola_zero" color="GREEN" rigid_body_joints="true" >
-    <xi:include href="../scene/g_orange_juice_14.xml"/>
-  </Group>
-
-
-  <Group prev="table_grid_0_1" name="_red" color="RED" rigid_body_joints="-0.0 -0.0 0 0 0 0" >
-    <xi:include href="../scene/g_glass_quadratic.xml"/>
-  </Group>
-
-  <Group prev="table_grid_2_7" name="_blue" color="BLUE" rigid_body_joints="-0.0 0.0 0 0 0 0" >
-    <xi:include href="../scene/g_glass_quadratic_29.xml"/>
-  </Group>
-
-
   
-    <Group prev="table_grid_1_6" name="bowl" color="YELLOW" rigid_body_joints="true" >
-    <xi:include href="../scene/g_bowl_23.xml"/>
-  </Group>
-
-
-
 
   <!--Group prev="table_grid_2_2" name="_coke_zero" color="GREEN" rigid_body_joints="true" >
     <xi:include href="../scene/g_bottle_half_liter.xml"/>
@@ -113,6 +93,9 @@
     <xi:include href="g_iphone5.xml"/>
   </Group-->
 	
+  <!--Group prev="table" name="_cereal" color="WHITE" rigid_body_joints="0.03 0.375 0 0 0 0" >
+    <xi:include href="../scene/g_cereal_box.xml"/>
+  </Group-->
 		
   <model_state model="default" time_stamp="0">
     <joint_state joint="j2s7s300_joint_1_right" position="20"/>

@@ -418,6 +418,68 @@ nlohmann::json ConcurrentSceneQuery::getObjects()
   return json;
 }
 
+nlohmann::json ConcurrentSceneQuery::getPairwiseDistances()
+{
+    std::lock_guard<std::mutex> lock(reentrancyLock); // Ensure thread safety
+    update(); // Update the scene if needed
+
+    auto ntts = scene.getSceneEntities(); // Get all entities in the scene
+    nlohmann::json distancesJson; // JSON object to hold distances
+
+    std::unordered_map<std::string, std::array<double, 3>> centroids; // Store centroids for entities
+
+    // Step 1: Compute centroids for all objects
+    for (const auto& ntt : ntts)
+    {
+        const RcsBody* bdy = RcsGraph_getBodyByName(graph, ntt->bdyName.c_str());
+        if (!bdy)
+        {
+            continue; // Skip if body not found
+        }
+
+        double xyzMin[3], xyzMax[3];
+        bool aabbValid = RcsGraph_computeBodyAABB(graph, bdy->id, -1, xyzMin, xyzMax, nullptr);
+
+        if (!aabbValid)
+        {
+            continue; // Skip if AABB is invalid
+        }
+
+        // Compute the centroid of the object
+        std::array<double, 3> centroid = {
+            (xyzMin[0] + xyzMax[0]) / 2.0,
+            (xyzMin[1] + xyzMax[1]) / 2.0,
+            (xyzMin[2] + xyzMax[2]) / 2.0
+        };
+
+        centroids[ntt->bdyName] = centroid;
+    }
+
+    // Step 2: Compute distances between all pairs of centroids
+    for (auto itA = centroids.begin(); itA != centroids.end(); ++itA)
+    {
+        for (auto itB = std::next(itA); itB != centroids.end(); ++itB)
+        {
+            const auto& centroidA = itA->second;
+            const auto& centroidB = itB->second;
+
+            // Compute Euclidean distance
+            double distance = std::sqrt(
+                (centroidA[0] - centroidB[0]) * (centroidA[0] - centroidB[0]) +
+                (centroidA[1] - centroidB[1]) * (centroidA[1] - centroidB[1]) +
+                (centroidA[2] - centroidB[2]) * (centroidA[2] - centroidB[2])
+            );
+
+            // Add to JSON object
+            distancesJson[itA->first][itB->first] = distance;
+            distancesJson[itB->first][itA->first] = distance; // Symmetric entry
+        }
+    }
+
+    return distancesJson; // Return the JSON object containing distances
+
+}
+
 nlohmann::json ConcurrentSceneQuery::getObjectsHeldBy(const std::string& agentName)
 {
   std::lock_guard<std::mutex> lock(reentrancyLock);

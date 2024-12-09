@@ -207,6 +207,8 @@ public:
   //---------------------------- SceneTransformationDataPlayer component ------------------------------------------------ //
   void loadTransformationDataFromFile(const std::string& filename);
   void startPlaybackTransformationData();
+  
+  nlohmann::json getPairwiseDistances();
 
 private:
 

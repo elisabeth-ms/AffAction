@@ -597,6 +597,7 @@ bool ExampleActionsECS::initAlgo()
     
   }
 
+
   // Add the SceneTransformationDataRecorder
   if (recordTransformations)
   {
