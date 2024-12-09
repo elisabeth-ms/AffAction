@@ -212,7 +212,7 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
         // RLOG(0, "Using AABB points for object %s", o.bdyName.c_str());
         std::vector<std::array<double,3>> pointsObject;
         // Get  points for each aabb
-        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.02);
+        getPointsAABBSurface(xyzMin, xyzMax, pointsObject, 0.015);
         
         for(const auto& point: pointsObject)
         {
@@ -325,29 +325,6 @@ void GazeComponent::onPostUpdateGraph(RcsGraph* desired, RcsGraph* current)
   }
 }
 
-void GazeComponent::writeSortedData(const double time, const std::vector<BodyIntersection>& objectsToAttend, const double gazeVel)
-{
-    if (!file.is_open()) return;
-
-    file << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << time;
-
-    file << "," <<(180.0 / M_PI)*gazeVel;
-
-    for (const auto& obj : objectsToAttend) {
-        file << "," << obj.name << "," << (180.0 / M_PI) * obj.gazeAngle;
-    }
-
-    file << "\n"; 
-}
-
-void GazeComponent::saveInFile(const std::string& filename)
-{
-
-    file.open(filename, std::ios::out);  // File in write mode
-    if (!file.is_open()) {
-       std::cerr << "Failed to open file: " << filename << std::endl;
-    }
-}
 
 
 void GazeComponent::addGazeDataPoint(double time, const std::vector<std::string>& objectNames, const std::vector<double>& angleDiffs,
@@ -397,19 +374,22 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     double stepZ = lengthZ / (stepsZ);
 
     
-
+    // Reserve memory for points
+    pointsObject.reserve(2 * (stepsX * stepsY + stepsY * stepsZ + stepsX * stepsZ));
 
 
     for (int i = 0; i < stepsX; ++i) {
+        double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsY; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMin[1] + j * stepY, xyzMax[2] };
+            std::array<double, 3> point = {x, xyzMin[1] + j * stepY, xyzMax[2] };
             pointsObject.push_back(point);
         }
     }
 
     for (int i = 0; i < stepsY; ++i) {
+        double y = xyzMin[1] + i * stepY;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0], xyzMin[1] + i * stepY, xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { xyzMin[0], y, xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
@@ -422,19 +402,21 @@ void GazeComponent::getPointsAABBSurface(const double (&xyzMin)[3], const double
     }
 
     for (int i = 0; i < stepsX; ++i) {
+      double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMin[1], xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { x, xyzMin[1], xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
 
     for (int i = 0; i < stepsX; ++i) {
+        double x = xyzMin[0] + i * stepX;
         for (int j = 0; j < stepsZ; ++j) {
-            std::array<double, 3> point = { xyzMin[0] + i * stepX, xyzMax[1], xyzMin[2] + j * stepZ };
+            std::array<double, 3> point = { x, xyzMax[1], xyzMin[2] + j * stepZ };
             pointsObject.push_back(point);
         }
     }
-    // RLOG(0, "Number of points: %d", pointsObject.size());
+    // RLOG(0, "Number of points: %ld", pointsObject.size());
 }
 
 
