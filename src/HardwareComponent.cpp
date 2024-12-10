@@ -359,6 +359,12 @@ ComponentBase* createComponent(EntityBase& entity,
     tts->setPiperVoice("kathleen");
     return tts;
   }
+  else if (componentName == "-piper_tts_ryan")
+  {
+    auto tts = new TTSComponent(&entity, "piper");
+    tts->setPiperVoice("ryan");
+    return tts;
+  }
   else if (componentName == "-websocket")
   {
     return new WebsocketActionComponent(&entity);

@@ -18,7 +18,7 @@ SceneTransformationDataPlayer::SceneTransformationDataPlayer(EntityBase* parent)
 
 SceneTransformationDataPlayer::~SceneTransformationDataPlayer()
 {
-    RLOG(1, "SceneTransformationDataPlayer destroyed");N
+    RLOG(1, "SceneTransformationDataPlayer destroyed");
 }
 
 void SceneTransformationDataPlayer::getRobotBodies(RcsGraph* graph)

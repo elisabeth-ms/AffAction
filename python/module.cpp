@@ -1014,6 +1014,13 @@ PYBIND11_MODULE(pyAffaction, m)
       ex.addComponent(c);
       return c ? true : false;
     }
+    else if (type == "piper_ryan")
+    {
+      auto c = createComponent(ex.getEntity(), ex.getGraph(),
+                               ex.getScene(), "-piper_tts_ryan");
+      ex.addComponent(c);
+      return c ? true : false;
+    }
 
     return false;
   })

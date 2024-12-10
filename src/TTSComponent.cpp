@@ -54,6 +54,8 @@ static std::string piperExe = std::string("\"") + piperPath + "/piper.exe" + std
 static std::string piperExe = piperPath + "/piper";
 #endif
 
+static std::string piperVoicesPath = std::string(VOICES_PIPER_PATH);
+
 
 namespace aff
 {
@@ -157,6 +159,11 @@ void TTSComponent::setPiperVoice(const std::string& voice)
     onnxStr = "en_US-kathleen-low.onnx\"";
     jsonStr = "en_en_US_kathleen_low_en_US-kathleen-low.onnx.json\"";
   }
+  else if(voice == "ryan")
+  {
+    onnxStr = "en_US-ryan-medium.onnx\"";
+    jsonStr = "en_en_US_ryan_medium_en_US-ryan-medium.onnx.json\"";
+  }
   else
   {
     RMSG_CPP("Unsupported voice: '" << voice << "'");
@@ -198,8 +205,11 @@ void TTSComponent::localThread()
 
     if (whichTTS == "piper")
     {
-      std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
-      std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
+
+      std::string onnxPath = std::string("\"") + piperVoicesPath + "/" + onnxStr;
+      std::string jsonPath = std::string("\"") + piperVoicesPath + "/" + jsonStr;
+      // std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
+      // std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
       std::string consCmd = "echo " + std::string("\"") + text + std::string("\" | ");
       consCmd += piperExe + " -m " + onnxPath + " -c " + jsonPath + " -f \"piper.wav\" >NUL 2>&1 && ";
       consCmd += "powershell -c (New-Object Media.SoundPlayer 'piper.wav').PlaySync() >NUL 2>&1";
@@ -265,8 +275,10 @@ void TTSComponent::localThread()
       // Piper command line:
       // echo "Hello, this is a test" | ./piper  -m en_US-joe-medium.onnx
       // -c en_en_US_john_medium_en_US-john-medium.onnx.json -f test1.wav; aplay test1.wav
-      std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
-      std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
+      // std::string onnxPath = std::string("\"") + piperPath + "/" + onnxStr;
+      // std::string jsonPath = std::string("\"") + piperPath + "/" + jsonStr;
+      std::string onnxPath = std::string("\"") + piperVoicesPath + "/" + onnxStr;
+      std::string jsonPath = std::string("\"") + piperVoicesPath + "/" + jsonStr;
       consCmd = "echo " + std::string("\"") + text + std::string("\" | ");
       consCmd += piperExe + " -m " + onnxPath + " -c " + jsonPath +
                  " -f piper.wav > piper.txt 2>&1; aplay piper.wav > aplay.txt 2>&1";
