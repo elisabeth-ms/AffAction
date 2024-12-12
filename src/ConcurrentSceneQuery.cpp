@@ -497,4 +497,13 @@ nlohmann::json ConcurrentSceneQuery::getGazeData()
   return gazeData;
 }
 
+nlohmann::json ConcurrentSceneQuery::getRecordedTransformations(double start_time, double end_time)
+{
+  sim->lockStepMtx();
+  nlohmann::json json = sim->getRecordedTransformations(start_time, end_time);
+  sim->unlockStepMtx();
+  return json;
+}
+
+
 }   // namespace aff

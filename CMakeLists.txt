@@ -277,6 +277,8 @@ src/FaceTracker.cpp
 src/VirtualCamera.cpp
 src/StringParserTools.cpp
 src/HeadGesture.cpp
+src/SceneTransformationDataRecorder.cpp
+
 )
 
 SET(ECS_SRCS

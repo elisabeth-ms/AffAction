@@ -237,6 +237,7 @@ ExampleActionsECS::ExampleActionsECS(int argc, char** argv) :
   virtualCameraWindowEnabled = false;
   gazeComponentEnabled = false;
   usersGazeComponentEnabled = false;
+  sceneTransformationDataRecorderEnabled = false;
   eyeIkEnabled = true;
   speedUp = 1;
   loopCount = 0;
@@ -352,6 +353,7 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-enableGazeComponent", &gazeComponentEnabled, "Start with gaze component");
   parser->getArgument("-enableEyeIK", &eyeIkEnabled, "Start with eye gaze model");
   parser->getArgument("-enableUsersGazeComponent", &usersGazeComponentEnabled, "Start with users gaze component");
+  parser->getArgument("-enableSceneTransformationsDataRecorder", &sceneTransformationDataRecorderEnabled, "Enable recording of scene transformations");
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
   const bool dryRun = true;
@@ -631,6 +633,15 @@ bool ExampleActionsECS::initAlgo()
   {
     virtualCamera = std::make_unique<VirtualCamera>(new Rcs::GraphNode(getCurrentGraph()),
                                                     virtualCameraWidth, virtualCameraHeight);
+  }
+    // Add the SceneTransformationDataRecorder
+  if (sceneTransformationDataRecorderEnabled)
+  {
+    double timeRecording = 30.0;
+    RLOG(0, "Recording scene transformations with a maximum time of %f", timeRecording);
+    sceneTransformationDataRecorder = new SceneTransformationDataRecorder(&entity, int(timeRecording/dt));
+    sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
+    addComponent(sceneTransformationDataRecorder);
   }
 
   // Printing the help prompt
@@ -1992,6 +2003,67 @@ nlohmann::json ExampleActionsECS::getUsersGazeData() const
     }
 
     return gazeDataJson;  // Return the JSON array of all gaze data points for all users
+}
+
+//---------------------------- SceneTransformationDataRecorder component ------------------------------------------------ //
+nlohmann::json ExampleActionsECS::getRecordedTransformations(double start_time, double end_time) const{
+    nlohmann::json recordedTransformationsJson = nlohmann::json::array();  // Create an empty JSON array
+    const std::deque<TransformationRecord> recordedTransformations = sceneTransformationDataRecorder->getRecordedTransformations();
+
+
+
+    // Iterate through the recorded transformations in the deque
+    for (const auto& record : recordedTransformations)
+    {
+        // Only process records within the specified time range
+        if (record.time >= start_time && record.time <= end_time)
+        {
+            // Create a JSON object for the current record
+            nlohmann::json recordJson;
+            recordJson["time"] = record.time;
+
+            // Create an array of transformations for this record
+            nlohmann::json transformationsJson = nlohmann::json::array();
+
+            for (const auto& transformation : record.transformations)
+            {
+                nlohmann::json transformationJson;
+                transformationJson["parent"] = transformation.parent;
+                transformationJson["child"] = transformation.child;
+
+                // Store the relative transformation matrix
+                nlohmann::json relativeTransformationJson;
+                for (int i = 0; i < 3; ++i)
+                {
+                    relativeTransformationJson["position"].push_back(transformation.relativeTransformation.org[i]);
+                }
+
+                // Store the rotation matrix as a 3x3 array
+                nlohmann::json rotationJson = nlohmann::json::array();
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        rotationJson.push_back(transformation.relativeTransformation.rot[i][j]);
+                    }
+                }
+                relativeTransformationJson["rotation"] = rotationJson;
+
+                // Add the transformation JSON to the list of transformations
+                transformationJson["relative_transformation"] = relativeTransformationJson;
+                transformationsJson.push_back(transformationJson);
+            }
+
+            // Add the transformations array to the record JSON object
+            recordJson["transformations"] = transformationsJson;
+
+            // Add this record to the final JSON array
+            recordedTransformationsJson.push_back(recordJson);
+        }
+    }
+
+    return recordedTransformationsJson;  // Return the JSON array of all recorded transformation data points
+
 }
 
 

@@ -61,6 +61,7 @@
 #include <atomic>
 
 #include "GazeComponent.h"
+#include "SceneTransformationDataRecorder.h"
 
 
 extern "C" {
@@ -131,6 +132,7 @@ public:
   bool gazeComponentEnabled;
   bool eyeIkEnabled;
   bool usersGazeComponentEnabled;
+  bool sceneTransformationDataRecorderEnabled;
   std::string virtualCameraBodyName;
   unsigned int speedUp;
   int maxNumThreads;
@@ -146,6 +148,9 @@ public:
   * \return JSON object containing the gaze data from all the agents.
   */
   nlohmann::json getUsersGazeData() const;
+   
+  nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
+
 
 protected:
 
@@ -220,7 +225,9 @@ protected:
   * each of which is responsible for tracking the gaze of a specific agent.
   * 
   */
-  std::vector<GazeComponent*> gazeComponents; 
+  std::vector<GazeComponent*> gazeComponents;
+  SceneTransformationDataRecorder* sceneTransformationDataRecorder; 
+  
 
 
 };
