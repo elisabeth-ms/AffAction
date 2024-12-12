@@ -236,6 +236,7 @@ ExampleActionsECS::ExampleActionsECS(int argc, char** argv) :
   virtualCameraEnabled = false;
   virtualCameraWindowEnabled = false;
   gazeComponentEnabled = false;
+  usersGazeComponentEnabled = false;
   eyeIkEnabled = true;
   speedUp = 1;
   loopCount = 0;
@@ -350,7 +351,7 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-earlyExitAction", &earlyExitAction, "Early exit with action prediction's first error");
   parser->getArgument("-enableGazeComponent", &gazeComponentEnabled, "Start with gaze component");
   parser->getArgument("-enableEyeIK", &eyeIkEnabled, "Start with eye gaze model");
-
+  parser->getArgument("-enableUsersGazeComponent", &usersGazeComponentEnabled, "Start with users gaze component");
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
   const bool dryRun = true;
@@ -485,9 +486,39 @@ bool ExampleActionsECS::initAlgo()
 
   if (gazeComponentEnabled)
   {
-    auto gazeC = new GazeComponent(&entity, "head_front_glass", 2);
+    auto gazeC = new GazeComponent(&entity, "Johnnie", "head_front_glass", 2);
     gazeC->addSceneToAttend(*getScene(), getGraph());
     addComponent(gazeC);
+  }
+  
+  if (usersGazeComponentEnabled){
+    // Retrieve all agents from the scene
+    std::vector<const Agent*> agents = getScene()->getAgents<Agent>();
+
+    // Iterate over all agents and add the GazeComponent to all agents except the robot called "Johnnie"
+    for (const auto& agent : agents)
+    {
+      if (agent->name != "Johnnie") 
+      {
+          // Create a new GazeComponent for the agent
+          // The GazeComponent tracks the agent's gazing objects using the following parameters:
+          // - parent: Reference to the entity managing events (here, 'entity')
+          // - agentName: Name of the agent
+          // - gazingBody: The part of the agent used for gaze tracking (e.g., "Head_Elisabeth")
+          // - dirIdx: Index indicating gaze direction (default: 1 for the y-axis)
+        GazeComponent* gC = new GazeComponent(&entity, agent->name, "Head_"+agent->name, 1);
+
+        // Add current scene and graph to the GazeComponent
+        gC->addSceneToAttend(*getScene(), getGraph());
+
+        // Store the GazeComponent in the list of components
+        gazeComponents.push_back(gC);
+
+        // Add the GazeComponent to the entity
+        addComponent(gC);
+      }
+      
+    }
   }
 
   if (eyeIkEnabled)
@@ -1922,6 +1953,45 @@ void ExampleActionsECS::addComponentArgument(const std::string& arg)
 std::string ExampleActionsECS::getComponentArguments() const
 {
   return componentArgs;
+}
+
+nlohmann::json ExampleActionsECS::getUsersGazeData() const
+{
+    nlohmann::json gazeDataJson = nlohmann::json::array();  // Create an empty JSON array
+    // Loop through all gaze components
+    for (const auto gC: gazeComponents){
+        nlohmann::json userGazeDataJson;
+        userGazeDataJson["agent_name"] = gC->getAgentName(); // Add the agent name to the JSON 
+ 
+        const std::deque<GazeDataPoint>* gazeData = gC->getGazeData();
+        // Create a JSON array for gaze data points of the current user
+        nlohmann::json dataJson = nlohmann::json::array();
+
+        // Iteterate over the gaze data deque
+        for(const auto& dataPoint : *gazeData){
+            nlohmann::json dataPointJson;
+            dataPointJson["time"] = dataPoint.time; // Add the time of the data point to the JSON 
+            dataPointJson["gaze_velocity"] = dataPoint.gazeVel; // Add the head velocity to the JSON 
+
+            // Create a JSON array for objects and their associated data
+            nlohmann::json objectsJson = nlohmann::json::array();
+            for (size_t i = 0; i < dataPoint.objectNames.size(); ++i) {
+                nlohmann::json objectJson;
+                objectJson["name"] = dataPoint.objectNames[i]; // Object name
+                objectJson["angle_diff"] = dataPoint.angleDiffs[i]; // Angular difference
+                objectJson["distance"] = dataPoint.distances[i]; // Distance to the object
+                objectJson["angle_diffXY"] = dataPoint.angleDiffsXY[i]; // Angular difference in XY plane
+                objectJson["angle_diffXZ"] = dataPoint.angleDiffsXZ[i]; // Angular difference in XZ plane
+                objectsJson.push_back(objectJson);
+            }
+            dataPointJson["objects"] = objectsJson; // Add the objects array to the data point JSON
+            dataJson.push_back(dataPointJson); // Add the data point JSON to the array
+        }
+        userGazeDataJson["gaze_data"] = dataJson; // Add the data array to the user JSON
+        gazeDataJson.push_back(userGazeDataJson); // Add user JSON to the main JSON array
+    }
+
+    return gazeDataJson;  // Return the JSON array of all gaze data points for all users
 }
 
 

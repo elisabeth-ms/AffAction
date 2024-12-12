@@ -472,6 +472,34 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getAgents();
   },
   py::arg("onlyVisibleAgents") = false)
+  
+  //////////////////////////////////////////////////////////////////////////////
+  // Returns gaze data as a JSON object. If no gaze data is available, 
+  // it returns an empty JSON object. The JSON is structured as:
+  // {
+  //     "agent_name": "AgentName",
+  //     "gaze_data": [
+  //         {
+  //             "time": 123.45,
+  //             "gaze_velocity": 5.67,
+  //             "objects": [
+  //                 {
+  //                     "name": "ObjectName",
+  //                     "angle_diff": 12.34,
+  //                     "distance": 1.23,
+  //                     "angle_diffXY": 5.67,
+  //                     "angle_diffXZ": 8.90
+  //                 }
+  //             ]
+  //         }
+  //     ]
+  // }
+  //////////////////////////////////////////////////////////////////////////////
+  .def("get_gaze_data", [](aff::ExampleActionsECS& ex) -> nlohmann::json
+  {
+    return ex.getQuery()->getGazeData();
+  })
+  
 
   //////////////////////////////////////////////////////////////////////////////
   // Returns an empty string if there are no objects held in the hand, or the
@@ -997,6 +1025,8 @@ PYBIND11_MODULE(pyAffaction, m)
   .def_readwrite("turbo", &aff::ExampleActionsECS::turbo)
   .def_readwrite("maxNumThreads", &aff::ExampleActionsECS::maxNumThreads)
   .def_readwrite("eyeIkEnabled", &aff::ExampleActionsECS::eyeIkEnabled)
+  .def_readwrite("usersGazeComponentEnabled", &aff::ExampleActionsECS::usersGazeComponentEnabled)
+
   ;
 
 

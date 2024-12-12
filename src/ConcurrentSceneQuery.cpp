@@ -488,4 +488,13 @@ std::string ConcurrentSceneQuery::getHoldingHand(const std::string& objectName)
   return std::string();
 }
 
+
+nlohmann::json ConcurrentSceneQuery::getGazeData()
+{
+  sim->lockStepMtx();
+  nlohmann::json gazeData = sim->getUsersGazeData();
+  sim->unlockStepMtx();
+  return gazeData;
+}
+
 }   // namespace aff

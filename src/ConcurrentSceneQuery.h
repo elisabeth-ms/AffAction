@@ -199,7 +199,7 @@ public:
    */
   std::vector<double> getPanTilt(const std::string& agentName,
                                  const std::string& sceneEntity);
-
+  nlohmann::json getGazeData();
 
 private:
 
