@@ -204,7 +204,6 @@ private:
 
   std::vector<BodyIntersection> objectsToAttend; // List of objects to attend for the gaze tracking
   std::deque<GazeDataPoint> gazeData; // Deque of gaze data points
-  double maxDurationGazeData; // Maximum duration of gaze data to retain (seconds)
   double totalDurationGazeData; // Total duration of gaze data in the deque (seconds)
   
 
