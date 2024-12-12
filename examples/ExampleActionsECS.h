@@ -62,6 +62,7 @@
 
 #include "GazeComponent.h"
 #include "SceneTransformationDataRecorder.h"
+#include "SceneTransformationDataPlayer.h"
 
 
 extern "C" {
@@ -133,6 +134,7 @@ public:
   bool eyeIkEnabled;
   bool usersGazeComponentEnabled;
   bool sceneTransformationDataRecorderEnabled;
+  bool sceneTransformationDataPlayerEnabled;
   std::string virtualCameraBodyName;
   unsigned int speedUp;
   int maxNumThreads;
@@ -150,7 +152,8 @@ public:
   nlohmann::json getUsersGazeData() const;
    
   nlohmann::json getRecordedTransformations(double start_time, double end_time) const;
-
+  void loadTransformationDataFromFile(const std::string& filename) const;
+  void startPlaybackTransformationData() const;
 
 protected:
 
@@ -227,6 +230,8 @@ protected:
   */
   std::vector<GazeComponent*> gazeComponents;
   SceneTransformationDataRecorder* sceneTransformationDataRecorder; 
+  SceneTransformationDataPlayer * sceneTransformationDataPlayer;
+
   
 
 

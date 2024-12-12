@@ -238,6 +238,7 @@ ExampleActionsECS::ExampleActionsECS(int argc, char** argv) :
   gazeComponentEnabled = false;
   usersGazeComponentEnabled = false;
   sceneTransformationDataRecorderEnabled = false;
+  sceneTransformationDataPlayerEnabled = false;
   eyeIkEnabled = true;
   speedUp = 1;
   loopCount = 0;
@@ -354,6 +355,7 @@ bool ExampleActionsECS::parseArgs(Rcs::CmdLineParser* parser)
   parser->getArgument("-enableEyeIK", &eyeIkEnabled, "Start with eye gaze model");
   parser->getArgument("-enableUsersGazeComponent", &usersGazeComponentEnabled, "Start with users gaze component");
   parser->getArgument("-enableSceneTransformationsDataRecorder", &sceneTransformationDataRecorderEnabled, "Enable recording of scene transformations");
+  parser->getArgument("-enableSceneTransformationPlayer", &sceneTransformationDataPlayerEnabled, "Enable playing of scene transformations");
   // This is just for pupulating the parsed command line arguments for the help
   // functions / help window.
   const bool dryRun = true;
@@ -643,6 +645,14 @@ bool ExampleActionsECS::initAlgo()
     sceneTransformationDataRecorder->addSceneToRecord(*getScene(), getGraph());
     addComponent(sceneTransformationDataRecorder);
   }
+  if (sceneTransformationDataPlayerEnabled)
+  {
+    RLOG(0, "Playing transformations");
+    sceneTransformationDataPlayer = new SceneTransformationDataPlayer(&entity);
+    sceneTransformationDataPlayer->getRobotBodies(getGraph());
+    addComponent(sceneTransformationDataPlayer);
+
+  }
 
   // Printing the help prompt
   RLOG_CPP(1, help());
@@ -666,6 +676,18 @@ bool ExampleActionsECS::initAlgo()
   //}
 
   return true;
+}
+
+
+
+void ExampleActionsECS::loadTransformationDataFromFile(const std::string& filename) const
+{
+  sceneTransformationDataPlayer->loadFromFile(filename);
+}
+
+void ExampleActionsECS::startPlaybackTransformationData() const
+{
+  sceneTransformationDataPlayer->startPlayback();
 }
 
 bool ExampleActionsECS::initGraphics()

@@ -504,6 +504,15 @@ PYBIND11_MODULE(pyAffaction, m)
     return ex.getQuery()->getRecordedTransformations(start_time, end_time);
   })
 
+    .def("load_transformation_data_from_file", [](aff::ExampleActionsECS& ex, std::string filename)
+  {
+    ex.getQuery()->loadTransformationDataFromFile(filename);
+  })
+
+  .def("start_playback_transformation_data", [](aff::ExampleActionsECS& ex)
+  {
+    ex.getQuery()->startPlaybackTransformationData();
+  })
 
   //////////////////////////////////////////////////////////////////////////////
   // Returns an empty string if there are no objects held in the hand, or the
@@ -1031,6 +1040,7 @@ PYBIND11_MODULE(pyAffaction, m)
   .def_readwrite("eyeIkEnabled", &aff::ExampleActionsECS::eyeIkEnabled)
   .def_readwrite("usersGazeComponentEnabled", &aff::ExampleActionsECS::usersGazeComponentEnabled)
   .def_readwrite("sceneTransformationDataRecorderEnabled", &aff::ExampleActionsECS::sceneTransformationDataRecorderEnabled)
+  .def_readwrite("sceneTransformationDataPlayerEnabled", &aff::ExampleActionsECS::sceneTransformationDataPlayerEnabled)
   ;
 
 
